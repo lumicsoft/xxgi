@@ -143,7 +143,7 @@
             document.getElementById('ref-balance-display').innerText = format(dash.availableBalance);
 
             // Referral Link Fix
-            const baseUrl = window.location.origin + "/register.php";
+            const baseUrl = window.location.origin + "/register.html";
             document.getElementById('refURL').value = `${baseUrl}?ref=${userData.username}`;
 
             loadLevelData(1);
@@ -194,4 +194,5 @@
     window.addEventListener('load', () => setTimeout(loadReferralPageData, 1200));
     </script>
 </body>
+
 </html>
