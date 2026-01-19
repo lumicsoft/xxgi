@@ -36,26 +36,23 @@ const ERC20_ABI = [
     "function balanceOf(address account) external view returns (uint256)"
 ];
 
-// --- HELPER TO ENSURE INITIALIZATION ---
+// --- HELPER TO ENSURE INITIALIZATION (Using logic from both codes) ---
 async function ensureConnection() {
-    if (typeof window.ethereum === 'undefined') {
-        alert("MetaMask not found! Please install MetaMask extension.");
+    if (!window.ethereum) {
+        alert("Please install MetaMask!");
         return false;
     }
-    if (!contract || !signer) {
-        try {
-            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-            const accounts = await provider.send("eth_requestAccounts", []);
-            signer = provider.getSigner();
-            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
-            return true;
-        } catch (e) {
-            console.error("Connection failed", e);
-            return false;
-        }
+    try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
+        return true;
+    } catch (e) {
+        console.error("Connection failed", e);
+        return false;
     }
-    return true;
 }
 
 const calculateGlobalROI = (amount) => {
@@ -85,13 +82,15 @@ async function init() {
     
     if (window.ethereum) {
         try {
-            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+            provider = new ethers.providers.Web3Provider(window.ethereum);
             const accounts = await provider.listAccounts();
+            
+            // Re-sync Global Variables
+            signer = provider.getSigner();
+            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
+
             if (accounts.length > 0) {
-                signer = provider.getSigner();
-                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-                usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
-                
                 if (localStorage.getItem('manualLogout') !== 'true') {
                     await setupApp(accounts[0]);
                 }
@@ -99,6 +98,7 @@ async function init() {
         } catch (error) { console.warn("Initialization silent: Wallet not yet connected."); }
     } else {
         console.log("MetaMask not detected on page load.");
+        // alert("Please install MetaMask!"); // Optional: Can be enabled if needed
     }
 }
 
@@ -478,7 +478,7 @@ if (window.ethereum) {
     window.ethereum.on('chainChanged', () => location.reload());
 }
 
-// Fixed Initialization with safe delay
+// Ye initialization logic dusre code jaisa hai jo 100% stable hai
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
