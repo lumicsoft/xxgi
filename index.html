@@ -4,15 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exgee | Secure DeFi Evolution</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css">
+
     <style>
+        :root {
+            --bg-black: #050505;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #9333ea;
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+
+        /* Glassmorphism Effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.5rem;
+        }
+
+        .text-gradient {
+            background: linear-gradient(to right, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-glow {
+            background: linear-gradient(to right, var(--accent-cyan), var(--accent-purple));
+            color: black;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-glow:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(147, 51, 234, 0.6);
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .premium-border {
+            border-left: 2px solid var(--accent-cyan);
+            transition: border 0.3s ease;
+        }
+
+        .premium-border:hover {
+            border-left-color: var(--accent-purple);
+        }
+
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            background: rgba(34, 211, 238, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-cyan);
+        }
+
         html { scroll-behavior: smooth; }
-        .hover-lift:hover { transform: translateY(-5px); transition: all 0.3s ease; }
     </style>
 </head>
 <body>
@@ -24,283 +94,202 @@
             <div class="w-10 h-10 bg-gradient-to-tr from-cyan-400 to-purple-600 rounded-xl flex items-center justify-center">
                 <i data-lucide="component" class="text-white"></i>
             </div>
-            <span class="text-xl font-black orbitron tracking-tighter uppercase text-white">Exgee <span class="text-gradient">BNB</span></span>
+            <span class="text-xl font-black orbitron tracking-tighter uppercase">Exgee <span class="text-gradient">BNB</span></span>
         </div>
 
         <div class="hidden lg:flex gap-8 text-xs font-bold uppercase tracking-widest text-gray-400 items-center">
-            <a href="index.html" class="nav-link hover:text-cyan-400 transition">Home</a>
-            <a href="#about-us" class="nav-link hover:text-cyan-400 transition">About</a>
-            
-            <button onclick="handleLogin()" class="nav-link text-white hover:text-cyan-400 transition border-l border-white/10 pl-6 ml-2 uppercase">
-                Login
-            </button>
-            <a href="register.html" class="nav-link text-cyan-400 hover:text-white transition uppercase">Register</a>
+            <a href="index.html" class="hover:text-cyan-400 transition">Home</a>
+            <a href="#about-us" class="hover:text-cyan-400 transition">About</a>
+            <button onclick="handleLogin()" class="text-white hover:text-cyan-400 border-l border-white/10 pl-6 ml-2 uppercase">Login</button>
+            <a href="register.html" class="text-cyan-400 hover:text-white uppercase transition">Register</a>
         </div>
 
         <div class="flex items-center gap-4">
-            <button id="connect-btn" onclick="handleLogin()" class="glass px-6 py-2 text-xs font-bold border-cyan-500/30 text-cyan-400">
+            <button id="connect-btn" onclick="handleLogin()" class="glass px-6 py-2 text-xs font-bold text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10 transition">
                 Connect Wallet
             </button>
-            
-            <button id="menu-btn" onclick="toggleMobileMenu()" class="lg:hidden text-gray-400 hover:text-cyan-400">
+            <button onclick="toggleMobileMenu()" class="lg:hidden text-gray-400">
                 <i data-lucide="menu" id="menu-icon"></i>
             </button>
         </div>
 
-        <div id="mobile-menu" class="hidden absolute top-full left-0 w-full glass mt-2 p-6 flex flex-col gap-4 text-center text-xs font-bold uppercase tracking-widest lg:hidden z-[100]">
-            <a href="index.html" class="nav-link block py-2 hover:text-cyan-400">Home</a>
-            <hr class="border-white/5">
-            <a href="#about-us" onclick="toggleMobileMenu()" class="nav-link block py-2 hover:text-cyan-400">About</a>
-            <hr class="border-white/5">
-            
+        <div id="mobile-menu" class="hidden absolute top-full left-0 w-full glass mt-2 p-6 flex flex-col gap-4 text-center z-[100]">
+            <a href="index.html" class="py-2 hover:text-cyan-400">Home</a>
+            <a href="#about-us" onclick="toggleMobileMenu()" class="py-2 hover:text-cyan-400">About</a>
             <div class="grid grid-cols-2 gap-4 mt-2">
-                <button onclick="handleLogin()" class="py-3 border border-white/10 rounded-xl text-gray-400 uppercase">
-                    Login
-                </button>
-                <a href="register.html" class="py-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400 flex items-center justify-center">
-                    Register
-                </a>
+                <button onclick="handleLogin()" class="py-3 border border-white/10 rounded-xl text-gray-400 uppercase">Login</button>
+                <a href="register.html" class="py-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400 flex items-center justify-center">Register</a>
             </div>
         </div>
     </nav>
 
     <header class="max-w-7xl mx-auto px-6 pt-20 pb-20 text-center relative z-10">
         <div class="inline-block px-4 py-1.5 glass text-[10px] font-bold tracking-[0.2em] text-cyan-400 border-cyan-500/20 mb-8 uppercase">
-            ⚡ BSC Network • Minimum 0.0011 BNB⚡
+            ⚡ BSC Network • Minimum 0.0011 BNB ⚡
         </div>
-        <h1 class="hero-title text-6xl md:text-8xl font-black orbitron leading-none mb-6">
+        <h1 class="text-6xl md:text-8xl font-black orbitron leading-none mb-6">
             SECURE <span class="text-gradient italic">DEFI</span> <br> EVOLUTION
         </h1>
         <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
             Exgee is a transparent blockchain-powered platform built for the future of decentralized finance. Earn guaranteed daily ROI securely.
         </p>
-        <div class="flex flex-wrap justify-center gap-4">
-            <button id="login-btn-main" onclick="handleLogin()" class="btn-glow px-10 py-4 rounded-2xl font-black text-lg">START INVESTING</button>
-        </div>
+        <button onclick="handleLogin()" class="btn-glow px-10 py-4 rounded-2xl font-black text-lg uppercase tracking-wider">START INVESTING</button>
     </header>
-
-    <section id="about-us" class="max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-                <h2 class="text-4xl font-black orbitron italic mb-6 uppercase">About <span class="text-gradient">Exgee</span></h2>
-                <p class="text-gray-400 text-lg leading-relaxed mb-6">
-                    Exgee is a community-driven DeFi protocol built on the Binance Smart Chain (BSC). Our platform is designed to provide users with a secure and automated way to grow their wealth through smart contract technology. 
-                </p>
-                <p class="text-gray-500 leading-relaxed">
-                    By removing intermediaries and utilizing transparent blockchain logic, Exgee ensures that every participant gets a fair opportunity to earn daily rewards while maintaining full control over their digital assets.
-                </p>
-            </div>
-            <div class="glass p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/5 to-purple-500/5">
-                <div class="grid grid-cols-2 gap-4 text-center">
-                    <div class="p-4 bg-black/20 rounded-2xl">
-                        <div class="text-cyan-400 font-black text-2xl mb-1 italic">100%</div>
-                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Verified Contracts</div>
-                    </div>
-                    <div class="p-4 bg-black/20 rounded-2xl">
-                        <div class="text-purple-400 font-black text-2xl mb-1 italic">24/7</div>
-                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Global Payouts</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="max-w-7xl mx-auto px-6 py-20 relative z-10">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="glass p-10 premium-border hover-lift group">
-                <div class="w-14 h-14 bg-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-400 mb-6 group-hover:scale-110 transition-transform">
-                    <i data-lucide="target" class="w-7 h-7"></i>
-                </div>
-                <h3 class="text-2xl font-black orbitron mb-4 italic uppercase">Our <span class="text-cyan-400">Mission</span></h3>
-                <p class="text-gray-400 leading-relaxed">
-                    To democratize decentralized finance by providing a secure, transparent, and user-friendly ecosystem that empowers individuals to achieve financial independence through automated daily rewards.
-                </p>
-            </div>
-
-            <div class="glass p-10 premium-border hover-lift group border-l-purple-500/50">
-                <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 transition-transform">
-                    <i data-lucide="eye" class="w-7 h-7"></i>
-                </div>
-                <h3 class="text-2xl font-black orbitron mb-4 italic uppercase">Our <span class="text-purple-400">Vision</span></h3>
-                <p class="text-gray-400 leading-relaxed">
-                    To be the leading global DeFi platform that sets the standard for sustainability and trust, creating a world where anyone, anywhere, can grow their digital wealth without barriers.
-                </p>
-            </div>
-        </div>
-    </section>
 
     <section class="max-w-7xl mx-auto px-6 py-20 relative z-10">
         <div class="text-center mb-16">
-            <h2 class="text-3xl font-black orbitron italic">INVESTMENT <span class="text-gradient uppercase">Slabs</span></h2>
+            <h2 class="text-3xl font-black orbitron italic uppercase">Investment <span class="text-gradient">Slabs</span></h2>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-            <div class="glass p-8 text-center border-l-4 border-l-cyan-500">
+            <div class="glass p-8 text-center border-l-4 border-cyan-500 hover:scale-105 transition-transform">
                 <span class="text-[10px] font-bold text-gray-500 uppercase">Slab 1</span>
                 <h3 class="text-lg font-bold my-2">&lt; 0.566 BNB</h3>
                 <div class="text-4xl font-black text-gradient my-4">5.00%</div>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Total Daily ROI</p>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Daily ROI</p>
             </div>
-            <div class="glass p-8 text-center border-l-4 border-l-purple-500">
+            <div class="glass p-8 text-center border-l-4 border-purple-500 hover:scale-105 transition-transform">
                 <span class="text-[10px] font-bold text-gray-500 uppercase">Slab 2</span>
                 <h3 class="text-lg font-bold my-2">0.566 - 1.132 BNB</h3>
                 <div class="text-4xl font-black text-gradient my-4">5.25%</div>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Total Daily ROI</p>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Daily ROI</p>
             </div>
-            <div class="glass p-8 text-center border-2 border-cyan-400 relative scale-105 shadow-2xl shadow-cyan-500/10">
+            <div class="glass p-8 text-center border-2 border-cyan-400 relative scale-110 shadow-2xl shadow-cyan-500/20">
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-400 text-black text-[10px] font-black px-4 py-1 rounded-full uppercase">Popular</div>
                 <span class="text-[10px] font-bold text-cyan-400 uppercase">Slab 3</span>
                 <h3 class="text-lg font-bold my-2">1.133 - 2.831 BNB</h3>
                 <div class="text-4xl font-black text-gradient my-4">5.50%</div>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Total Daily ROI</p>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Daily ROI</p>
             </div>
-            <div class="glass p-8 text-center border-l-4 border-l-pink-500">
+            <div class="glass p-8 text-center border-l-4 border-pink-500 hover:scale-105 transition-transform">
                 <span class="text-[10px] font-bold text-gray-500 uppercase">Slab 4</span>
                 <h3 class="text-lg font-bold my-2">2.832 - 5.663 BNB</h3>
                 <div class="text-4xl font-black text-gradient my-4">5.75%</div>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Total Daily ROI</p>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Daily ROI</p>
             </div>
-            <div class="glass p-8 text-center border-l-4 border-l-yellow-500">
+            <div class="glass p-8 text-center border-l-4 border-yellow-500 hover:scale-105 transition-transform">
                 <span class="text-[10px] font-bold text-gray-500 uppercase">Slab 5</span>
                 <h3 class="text-lg font-bold my-2">≥ 5.665 BNB</h3>
                 <div class="text-4xl font-black text-gradient my-4">6.00%</div>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Total Daily ROI</p>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Daily ROI</p>
             </div>
         </div>
     </section>
 
     <section class="max-w-7xl mx-auto px-6 py-24 relative z-10">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-black orbitron italic">HOW IT <span class="text-gradient uppercase">Works</span></h2>
-            <p class="text-gray-500 text-sm tracking-widest uppercase mt-2">Simple 6-Step Wealth Generation</p>
+            <h2 class="text-4xl font-black orbitron italic uppercase">How It <span class="text-gradient">Works</span></h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="glass p-8 premium-border">
-                <div class="relative z-10">
-                    <div class="icon-circle mb-6"><i data-lucide="wallet"></i></div>
-                    <h4 class="text-xl font-black mb-3 italic">01. Connect Wallet</h4>
-                    <p class="text-gray-400 text-sm">Securely link your MetaMask or Trust Wallet via Web3 technology.</p>
-                </div>
+                <div class="icon-circle mb-6"><i data-lucide="wallet"></i></div>
+                <h4 class="text-xl font-black mb-3 italic">01. Connect Wallet</h4>
+                <p class="text-gray-400 text-sm">Securely link your MetaMask or Trust Wallet via Web3 technology.</p>
             </div>
             <div class="glass p-8 premium-border">
-                <div class="relative z-10">
-                    <div class="icon-circle mb-6"><i data-lucide="bar-chart-big"></i></div>
-                    <h4 class="text-xl font-black mb-3 italic">02. Select Level</h4>
-                    <p class="text-gray-400 text-sm">Amount automatically determines your tier for maximum ROI.</p>
-                </div>
+                <div class="icon-circle mb-6"><i data-lucide="bar-chart-big"></i></div>
+                <h4 class="text-xl font-black mb-3 italic">02. Select Level</h4>
+                <p class="text-gray-400 text-sm">Amount automatically determines your tier for maximum ROI.</p>
             </div>
             <div class="glass p-8 premium-border">
-                <div class="relative z-10">
-                    <div class="icon-circle mb-6"><i data-lucide="database"></i></div>
-                    <h4 class="text-xl font-black mb-3 italic">03. Deposit BNB</h4>
-                    <p class="text-gray-400 text-sm">Invest through smart contracts and start earning immediately.</p>
-                </div>
-            </div>
-            <div class="glass p-8 premium-border">
-                <div class="relative z-10">
-                    <div class="icon-circle mb-6"><i data-lucide="zap"></i></div>
-                    <h4 class="text-xl font-black mb-3 italic">04. Earn Daily</h4>
-                    <p class="text-gray-400 text-sm">Automated distributions sent to your account every 8 hours.</p>
-                </div>
-            </div>
-            <div class="glass p-8 premium-border">
-                <div class="relative z-10">
-                    <div class="icon-circle mb-6"><i data-lucide="network"></i></div>
-                    <h4 class="text-xl font-black mb-3 italic">05. Build Network</h4>
-                    <p class="text-gray-400 text-sm">Grow your team and earn multi-level referral commissions.</p>
-                </div>
-            </div>
-            <div class="glass p-8 premium-border">
-                <div class="relative z-10">
-                    <div class="icon-circle mb-6"><i data-lucide="refresh-cw"></i></div>
-                    <h4 class="text-xl font-black mb-3 italic">06. Compound Wealth</h4>
-                    <p class="text-gray-400 text-sm">Withdraw or compound your earnings to accelerate growth.</p>
-                </div>
+                <div class="icon-circle mb-6"><i data-lucide="database"></i></div>
+                <h4 class="text-xl font-black mb-3 italic">03. Deposit BNB</h4>
+                <p class="text-gray-400 text-sm">Invest through smart contracts and start earning immediately.</p>
             </div>
         </div>
     </section>
 
-    <section class="max-w-7xl mx-auto px-6 py-20 bg-gradient-to-t from-purple-900/10 to-transparent relative z-10">
-        <h2 class="text-4xl font-black orbitron italic text-center mb-16 uppercase">Platform <span class="text-gradient">Benefits</span></h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div class="glass p-10 premium-border flex gap-6">
-                <div class="relative z-10 flex gap-6">
-                    <div class="text-cyan-400"><i data-lucide="trending-up" class="w-10 h-10"></i></div>
-                    <div>
-                        <h5 class="text-lg font-bold mb-2 uppercase">High Daily ROI</h5>
-                        <p class="text-gray-500 text-sm">Earn up to 6% daily returns with our proven distribution system.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="glass p-10 premium-border flex gap-6">
-                <div class="relative z-10 flex gap-6">
-                    <div class="text-purple-400"><i data-lucide="users" class="w-10 h-10"></i></div>
-                    <div>
-                        <h5 class="text-lg font-bold mb-2 uppercase">Referral System</h5>
-                        <p class="text-gray-500 text-sm">Massive income potential through our multi-tier referral network.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="glass p-10 premium-border flex gap-6">
-                <div class="relative z-10 flex gap-6">
-                    <div class="text-pink-400"><i data-lucide="gift" class="w-10 h-10"></i></div>
-                    <div>
-                        <h5 class="text-lg font-bold mb-2 uppercase">Onboarding Bonus</h5>
-                        <p class="text-gray-500 text-sm">Instant rewards waiting for you on your very first deposit.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="glass p-10 premium-border flex gap-6">
-                <div class="relative z-10 flex gap-6">
-                    <div class="text-yellow-400"><i data-lucide="crown" class="w-10 h-10"></i></div>
-                    <div>
-                        <h5 class="text-lg font-bold mb-2 uppercase">Leadership</h5>
-                        <p class="text-gray-500 text-sm">Exclusive rewards for top-tier community leaders.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="glass p-10 premium-border flex gap-6">
-                <div class="relative z-10 flex gap-6">
-                    <div class="text-blue-400"><i data-lucide="coins" class="w-10 h-10"></i></div>
-                    <div>
-                        <h5 class="text-lg font-bold mb-2 uppercase">Compounding</h5>
-                        <p class="text-gray-500 text-sm">Maximize wealth by regrowing your daily profits.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="glass p-10 premium-border flex gap-6">
-                <div class="relative z-10 flex gap-6">
-                    <div class="text-green-400"><i data-lucide="unlock" class="w-10 h-10"></i></div>
-                    <div>
-                        <h5 class="text-lg font-bold mb-2 uppercase">24/7 Access</h5>
-                        <p class="text-gray-500 text-sm">Withdraw your profits & Principal anytime without manual intervention.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <footer class="max-w-7xl mx-auto px-6 py-10 text-center border-t border-white/5 text-gray-500 text-sm">
+        <p>© 2026 Exgee BNB. All Rights Reserved. Built on Binance Smart Chain.</p>
+    </footer>
 
-    <div id="footer-placeholder"></div>
-
-    <script src="web3-handler.js"></script>
-    <script src="scripts.js"></script>
     <script>
+        // 1. Initialize Lucide Icons
         lucide.createIcons();
 
+        // 2. Mobile Menu Toggle
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             const icon = document.getElementById('menu-icon');
             menu.classList.toggle('hidden');
-            
-            if (menu.classList.contains('hidden')) {
-                icon.setAttribute('data-lucide', 'menu');
-            } else {
-                icon.setAttribute('data-lucide', 'x');
-            }
+            const isHidden = menu.classList.contains('hidden');
+            icon.setAttribute('data-lucide', isHidden ? 'menu' : 'x');
             lucide.createIcons();
         }
+
+        // 3. Web3 Login Handler (Redirects or triggers wallet)
+        async function handleLogin() {
+            if (window.ethereum) {
+                try {
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    const signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    console.log("Connected:", address);
+                    // Redirecting to register or dashboard after login
+                    window.location.href = 'register.html'; 
+                } catch (error) {
+                    alert("Wallet connection failed!");
+                }
+            } else {
+                alert("Please install MetaMask or Trust Wallet!");
+            }
+        }
+
+        // 4. Background Animation (Particles)
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(34, 211, 238, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createParticles() {
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        createParticles();
+        animate();
     </script>
 </body>
 </html>
