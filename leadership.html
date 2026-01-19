@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leadership | EXGI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style1.css">
+    <style>
+        .usdt-icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+        .usdt-icon-sm { width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 2px; }
+        .premium-border { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
+    </style>
+</head>
+<body class="bg-[#050505] text-white">
+
+    <div id="header-placeholder"></div>
+    <div id="sidebar-placeholder"></div>
+
+    <main class="max-w-7xl mx-auto px-6 relative z-10 pt-10 pb-20">
+        
+        <div class="mb-8">
+            <h1 class="text-3xl font-black orbitron italic uppercase tracking-tighter">Leadership <span class="text-yellow-500">Overview</span></h1>
+            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Track your Rank & Team Business</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="premium-border p-8 flex items-center justify-between border-l-4 border-l-green-500">
+                <div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Current Rank</p>
+                    <h2 id="rank-display" class="text-4xl font-black orbitron text-white mt-1">USER</h2>
+                    <p id="rank-bonus-display" class="text-green-400 font-bold text-[10px] mt-2 italic">Status: Active</p>
+                </div>
+                <div class="bg-green-500/10 p-4 rounded-full">
+                    <i data-lucide="shield-check" class="w-10 h-10 text-green-400"></i>
+                </div>
+            </div>
+            <div class="premium-border p-8 flex items-center justify-between border-l-4 border-l-yellow-500">
+                <div>
+                    <p class="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Next Achievement</p>
+                    <h2 id="next-rank-display" class="text-4xl font-black orbitron text-white mt-1 italic">V1 RANK</h2>
+                    <p class="text-gray-500 font-bold text-[10px] mt-2 italic">Target: $5,000 Business</p>
+                </div>
+                <div class="bg-yellow-500/10 p-4 rounded-full">
+                    <i data-lucide="award" class="w-10 h-10 text-yellow-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="premium-border p-5 text-center flex flex-col items-center justify-center">
+                <i data-lucide="wallet" class="w-8 h-8 text-green-400 mb-2"></i>
+                <p class="text-[8px] font-bold text-gray-400 uppercase">My Package</p>
+                <h3 class="text-lg font-black orbitron flex items-center mt-1">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon">
+                    <span id="user-package">0.00</span>
+                </h3>
+            </div>
+            <div class="premium-border p-5 text-center flex flex-col items-center justify-center">
+                <i data-lucide="coins" class="w-8 h-8 text-yellow-500 mb-2"></i>
+                <p class="text-[8px] font-bold text-gray-400 uppercase">Leadership Earnings</p>
+                <h3 class="text-lg font-black orbitron flex items-center mt-1">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon">
+                    <span id="total-rank-earned">0.00</span>
+                </h3>
+            </div>
+            <div class="premium-border p-5 text-center flex flex-col items-center justify-center">
+                <i data-lucide="bar-chart-3" class="w-8 h-8 text-emerald-400 mb-2"></i>
+                <p class="text-[8px] font-bold text-gray-400 uppercase">Total Team Active</p>
+                <h3 id="team-active-count" class="text-lg font-black orbitron mt-1">0</h3>
+            </div>
+            <div class="premium-border p-5 text-center flex flex-col items-center justify-center">
+                <i data-lucide="activity" class="w-8 h-8 text-green-500 mb-2"></i>
+                <p class="text-[8px] font-bold text-gray-400 uppercase">Team ROI Business</p>
+                <h3 class="text-lg font-black orbitron flex items-center mt-1">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon">
+                    <span id="team-active-volume">0.00</span>
+                </h3>
+            </div>
+        </div>
+
+        <div class="premium-border p-6 md:p-8 mb-8">
+            <h3 class="text-xl font-black orbitron uppercase italic mb-6"><span class="text-yellow-500">Direct</span> Partners</h3>
+            <div class="overflow-x-auto">
+                <table class="luxury-table w-full text-left">
+                    <thead>
+                        <tr class="text-[10px] uppercase text-gray-500 border-b border-white/10">
+                            <th class="p-4">Partner</th>
+                            <th>Package</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="direct-downline-body" class="text-gray-300 text-xs font-mono">
+                        <tr>
+                            <td colspan="3" class="p-8 text-center text-gray-500 italic">Connecting...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="premium-border p-6 md:p-8">
+            <h3 class="text-xl font-black orbitron uppercase italic mb-6"><span class="text-yellow-500">Reward</span> Tiers</h3>
+            <div class="overflow-x-auto">
+                <table class="luxury-table w-full text-left">
+                    <thead>
+                        <tr class="text-[10px] uppercase text-gray-500 border-b border-white/10">
+                            <th class="p-4">Rank</th><th>Bonus Level</th><th>Criteria</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300 text-xs font-mono">
+                        <tr class="border-b border-white/5"><td class="p-4 text-white font-bold">V1</td><td class="text-yellow-500 font-bold">5 Levels</td><td>$5,000 Team Business</td></tr>
+                        <tr class="border-b border-white/5"><td class="p-4 text-white font-bold">V2</td><td class="text-yellow-500 font-bold">10 Levels</td><td>$15,000 Team Business</td></tr>
+                        <tr class="border-b border-white/5"><td class="p-4 text-white font-bold">V3</td><td class="text-yellow-500 font-bold">15 Levels</td><td>$35,000 Team Business</td></tr>
+                        <tr class="border-b border-white/5"><td class="p-4 text-white font-bold">V4</td><td class="text-yellow-500 font-bold">20 Levels</td><td>$75,000 Team Business</td></tr>
+                        <tr><td class="p-4 text-white font-bold">V5</td><td class="text-yellow-500 font-bold">25 Levels</td><td>$1,50,000 Team Business</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="components.js"></script>
+    <script src="web3-handler.js"></script>
+    <script>
+        lucide.createIcons();
+
+        async function loadLeadershipData() {
+            if (typeof window.contract === 'undefined') {
+                setTimeout(loadLeadershipData, 1000);
+                return;
+            }
+
+            try {
+                const address = await window.signer.getAddress();
+                const [userData, dash] = await Promise.all([
+                    window.contract.users(address),
+                    window.contract.getUserDashboard(address)
+                ]);
+
+                document.getElementById('user-package').innerText = format(userData.package);
+                document.getElementById('total-rank-earned').innerText = format(dash.totalLevelROIIncome);
+                document.getElementById('team-active-count').innerText = dash.totalTeamActive.toString();
+                document.getElementById('team-active-volume').innerText = format(dash.totalLevelROIIncome);
+
+                // Simple Rank Calculation
+                const volume = parseFloat(format(dash.totalLevelROIIncome));
+                let currentRank = "USER";
+                let nextRank = "V1 RANK";
+
+                if(volume >= 150000) { currentRank = "V5"; nextRank = "MAX RANK"; }
+                else if(volume >= 75000) { currentRank = "V4"; nextRank = "V5 RANK"; }
+                else if(volume >= 35000) { currentRank = "V3"; nextRank = "V4 RANK"; }
+                else if(volume >= 15000) { currentRank = "V2"; nextRank = "V3 RANK"; }
+                else if(volume >= 5000) { currentRank = "V1"; nextRank = "V2 RANK"; }
+
+                document.getElementById('rank-display').innerText = currentRank;
+                document.getElementById('next-rank-display').innerText = nextRank;
+
+                loadPartnerTable(address);
+            } catch (err) { console.error("Leadership Load Error:", err); }
+        }
+
+        async function loadPartnerTable(address) {
+            const tableBody = document.getElementById('direct-downline-body');
+            try {
+                const members = await window.contract.getLevelTeamDetails(address, 1);
+                if (!members || members.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 italic">No direct partners</td></tr>`;
+                    return;
+                }
+                tableBody.innerHTML = members.map(m => `
+                    <tr class="border-b border-white/5">
+                        <td class="p-4 text-white font-bold">${m.username}</td>
+                        <td class="p-4">${format(m.package)} USDT</td>
+                        <td class="p-4"><span class="${m.package > 0 ? 'text-green-400' : 'text-red-500'} font-bold">${m.package > 0 ? 'ACTIVE' : 'INACTIVE'}</span></td>
+                    </tr>
+                `).join('');
+            } catch (err) { }
+        }
+
+        window.addEventListener('load', () => setTimeout(loadLeadershipData, 1200));
+    </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | EXGI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style1.css"> 
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #050505; color: white; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .text-gradient { background: linear-gradient(to right, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .input-field { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 16px; width: 100%; color: white; outline: none; transition: 0.3s; font-size: 0.875rem; }
+        .input-field:focus { border-color: #f59e0b; background: rgba(255,255,255,0.07); box-shadow: 0 0 20px rgba(245, 158, 11, 0.1); }
+        .gold-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); transition: all 0.3s ease; border: none; }
+        .gold-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="header-placeholder"></div>
+
+    <main class="flex-grow flex items-center justify-center px-6 py-20 relative overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/10 rounded-full blur-[120px] -z-10"></div>
+
+        <div class="glass-card w-full max-w-md p-10 rounded-[2.5rem] relative">
+            <div class="text-center mb-10">
+                <div class="inline-block p-4 bg-yellow-500/10 rounded-2xl mb-4">
+                    <i data-lucide="user-plus" class="w-8 h-8 text-yellow-500"></i>
+                </div>
+                <h1 class="text-3xl font-black orbitron uppercase tracking-tighter mb-2">Create <span class="text-gradient">Account</span></h1>
+                <p class="text-gray-400 text-[10px] tracking-[0.3em] font-bold uppercase">Join the EXGI Ecosystem</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="group">
+                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1 transition-colors group-focus-within:text-yellow-500">Desired Username</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" id="reg-username" placeholder="Enter unique username" class="input-field pl-12">
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1 transition-colors group-focus-within:text-yellow-500">Referrer Username</label>
+                    <div class="relative">
+                        <i data-lucide="users" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" id="reg-referrer" placeholder="Who invited you?" class="input-field pl-12">
+                    </div>
+                    <p id="ref-status" class="text-[9px] mt-2 text-yellow-500 hidden font-bold italic uppercase flex items-center gap-1">
+                        <i data-lucide="check-circle" class="w-3 h-3"></i> Invitation Link Active
+                    </p>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="initiateRegister()" id="reg-btn" class="gold-btn w-full py-4 orbitron font-black tracking-widest rounded-2xl text-white text-sm">
+                        INITIALIZE REGISTRATION
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <p class="text-center text-[10px] text-gray-500 uppercase font-bold tracking-widest">
+                        Already have an account? 
+                        <a href="#" onclick="initiateLogin()" class="text-yellow-500 hover:underline cursor-pointer ml-1">Login Securely</a>
+                    </p>
+                    
+                    <div class="h-[1px] bg-white/5 w-full"></div>
+                    
+                    <p class="text-center text-[9px] text-gray-600 uppercase font-bold px-4 leading-relaxed">
+                        By registering, you confirm your connection to the <span class="text-gray-400">EXGI USDT</span> smart contract.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="web3-handler.js"></script>
+    <script src="components.js"></script>
+
+    <script>
+        lucide.createIcons();
+
+        // Referral Auto-fill Logic
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref) {
+                const el = document.getElementById('reg-referrer');
+                el.value = ref; 
+                el.readOnly = true; 
+                el.classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('ref-status').classList.remove('hidden');
+            }
+        });
+
+        async function initiateRegister() {
+            const btn = document.getElementById('reg-btn');
+            const originalText = btn.innerText;
+            
+            if (window.handleRegister && typeof window.handleRegister === 'function') {
+                btn.disabled = true;
+                btn.innerText = "CONNECTING WALLET...";
+                try {
+                    await window.handleRegister();
+                } catch (e) {
+                    console.error(e);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            } else {
+                alert("Blockchain is still connecting. Please ensure MetaMask is active.");
+            }
+        }
+
+        async function initiateLogin() {
+            if (window.handleLogin && typeof window.handleLogin === 'function') {
+                await window.handleLogin();
+            } else {
+                alert("Wallet connection pending. Please try again.");
+            }
+        }
+    </script>
+</body>
+</html>
