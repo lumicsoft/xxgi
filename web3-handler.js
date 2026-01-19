@@ -38,13 +38,13 @@ const ERC20_ABI = [
 
 // --- HELPER TO ENSURE INITIALIZATION ---
 async function ensureConnection() {
-    if (!window.ethereum) {
-        alert("Please install MetaMask!");
+    if (typeof window.ethereum === 'undefined') {
+        alert("MetaMask not found! Please install MetaMask extension.");
         return false;
     }
     if (!contract || !signer) {
         try {
-            provider = new ethers.providers.Web3Provider(window.ethereum);
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
             const accounts = await provider.send("eth_requestAccounts", []);
             signer = provider.getSigner();
             contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
@@ -85,7 +85,7 @@ async function init() {
     
     if (window.ethereum) {
         try {
-            provider = new ethers.providers.Web3Provider(window.ethereum);
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
             const accounts = await provider.listAccounts();
             if (accounts.length > 0) {
                 signer = provider.getSigner();
@@ -478,4 +478,7 @@ if (window.ethereum) {
     window.ethereum.on('chainChanged', () => location.reload());
 }
 
-window.addEventListener('load', init);
+// Fixed Initialization with safe delay
+window.addEventListener('load', () => {
+    setTimeout(init, 500); 
+});
