@@ -81,29 +81,27 @@ function checkReferralURL() {
 
 // --- INITIALIZATION ---
 async function init() {
-    checkReferralURL();
+    if (typeof checkReferralURL === "function") checkReferralURL();
+    
     if (window.ethereum) {
         try {
             provider = new ethers.providers.Web3Provider(window.ethereum);
             const accounts = await provider.listAccounts();
-            
             if (accounts.length > 0) {
                 signer = provider.getSigner();
                 contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-                usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer); 
-
+                usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
+                
                 if (localStorage.getItem('manualLogout') !== 'true') {
                     await setupApp(accounts[0]);
-                } else {
-                    updateNavbar(accounts[0]);
                 }
             }
-        } catch (error) { console.error("Init Error", error); }
-    } else { 
-        console.log("MetaMask not found. Waiting for user action."); 
+        } catch (error) { console.warn("Initialization silent: Wallet not yet connected."); }
+    } else {
+        // Sirf console mein dikhayega, baar-baar pop-up nahi aayega
+        console.log("MetaMask not detected on page load.");
     }
 }
-
 // --- CORE LOGIC ---
 window.handleInvest = async function() {
     if (!(await ensureConnection())) return;
@@ -477,3 +475,4 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
