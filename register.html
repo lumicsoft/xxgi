@@ -83,50 +83,75 @@
 
     <script src="web3-handler.js"></script>
     <script src="components.js"></script>
+<script>
+    lucide.createIcons();
 
-    <script>
-        lucide.createIcons();
-
-        // Referral Auto-fill Logic
-        window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const ref = urlParams.get('ref');
-            if (ref) {
-                const el = document.getElementById('reg-referrer');
+    // --- Referral Auto-fill Logic ---
+    window.addEventListener('load', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (ref) {
+            const el = document.getElementById('reg-referrer');
+            if (el) {
                 el.value = ref; 
                 el.readOnly = true; 
                 el.classList.add('opacity-50', 'cursor-not-allowed');
-                document.getElementById('ref-status').classList.remove('hidden');
-            }
-        });
-
-        async function initiateRegister() {
-            const btn = document.getElementById('reg-btn');
-            const originalText = btn.innerText;
-            
-            if (window.handleRegister && typeof window.handleRegister === 'function') {
-                btn.disabled = true;
-                btn.innerText = "CONNECTING WALLET...";
-                try {
-                    await window.handleRegister();
-                } catch (e) {
-                    console.error(e);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }
-            } else {
-                alert("Blockchain is still connecting. Please ensure MetaMask is active.");
+                const status = document.getElementById('ref-status');
+                if (status) status.classList.remove('hidden');
             }
         }
+    });
 
-        async function initiateLogin() {
-            if (window.handleLogin && typeof window.handleLogin === 'function') {
+    // --- Smart Register Logic ---
+    async function initiateRegister() {
+        const btn = document.getElementById('reg-btn');
+        const originalText = "INITIALIZE REGISTRATION";
+        
+        // 1. Check if MetaMask is installed
+        if (!window.ethereum) {
+            alert("MetaMask not found! Please install MetaMask extension to use this dApp.");
+            return;
+        }
+
+        // 2. Check if the handler is ready in web3-handler.js
+        if (typeof window.handleRegister === 'function') {
+            btn.disabled = true;
+            btn.innerText = "CONNECTING...";
+            try {
+                // Hamari web3-handler function call karega
+                await window.handleRegister();
+            } catch (e) {
+                console.error("Register Error:", e);
+                alert("Operation cancelled or failed.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        } else {
+            // Agar file abhi load ho rahi hai, toh thoda wait karein
+            btn.innerText = "SYNCING BLOCKCHAIN...";
+            setTimeout(initiateRegister, 1000);
+        }
+    }
+
+    // --- Smart Login Logic ---
+    async function initiateLogin() {
+        if (!window.ethereum) {
+            alert("MetaMask is required to login.");
+            return;
+        }
+
+        if (typeof window.handleLogin === 'function') {
+            try {
                 await window.handleLogin();
-            } else {
-                alert("Wallet connection pending. Please try again.");
+            } catch (e) {
+                console.error("Login Error:", e);
             }
+        } else {
+            alert("System is initializing. Please try again in 2 seconds.");
         }
-    </script>
+    }
+</script>
 </body>
+
 </html>
