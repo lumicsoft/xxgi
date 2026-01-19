@@ -1,9 +1,9 @@
 let provider, signer, contract, usdtContract;
 
 // --- CONFIGURATION ---
-const CONTRACT_ADDRESS = "0x34FF4680A9A659C0ef4edF7776648472101205a4"; 
-const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955"; // BEP20 USDT
-const CHAIN_ID = 56; // BSC Mainnet
+const CONTRACT_ADDRESS = "0x5e5349C0212196B96e7Df8dca42D861ffA7f78A0"; 
+const USDT_ADDRESS = "0x3b66b1e08f55af26c8ea14a73da64b6bc8d799de"; // BEP20 USDT
+const CHAIN_ID = 97; // BSC Mainnet
 
 // --- RANK CONFIG (Same as you provided) ---
 const RANK_DETAILS = [
@@ -219,5 +219,6 @@ function updateNavbar(addr) {
     const btn = document.getElementById('connect-btn');
     if(btn) btn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
 }
+
 
 window.addEventListener('load', init);
