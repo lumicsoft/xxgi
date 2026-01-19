@@ -3,7 +3,7 @@ let provider, signer, contract, usdtContract;
 // --- CONFIGURATION ---
 const CONTRACT_ADDRESS = "0x5e5349C0212196B96e7Df8dca42D861ffA7f78A0"; 
 const USDT_ADDRESS = "0x3b66b1e08f55af26c8ea14a73da64b6bc8d799de"; // BEP20 USDT
-const CHAIN_ID = 97; // BSC Testnet (Aapne 97 likha hai, jo Testnet hai)
+const CHAIN_ID = 97; // BSC Testnet
 
 // --- RANK CONFIG FOR LEADERSHIP ---
 const RANK_DETAILS = [
@@ -98,10 +98,10 @@ async function init() {
             }
         } catch (error) { console.warn("Initialization silent: Wallet not yet connected."); }
     } else {
-        // Sirf console mein dikhayega, baar-baar pop-up nahi aayega
         console.log("MetaMask not detected on page load.");
     }
 }
+
 // --- CORE LOGIC ---
 window.handleInvest = async function() {
     if (!(await ensureConnection())) return;
@@ -163,10 +163,10 @@ window.handleLogin = async function() {
 
         if (userData.username !== "") {
             if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
-            window.location.href = "index1.php";
+            window.location.href = "index1.html";
         } else {
             alert("This wallet is not registered!");
-            window.location.href = "register.php";
+            window.location.href = "register.html";
         }
     } catch (err) {
         console.error("Login Error:", err);
@@ -185,7 +185,7 @@ window.handleRegister = async function() {
        const tx = await contract.register(userField.value.trim(), refField.value.trim());
         await tx.wait();
         localStorage.removeItem('manualLogout'); 
-        window.location.href = "index1.php";
+        window.location.href = "index1.html";
     } catch (err) { alert("Error: " + (err.reason || err.message)); }
 }
 
@@ -198,7 +198,7 @@ window.handleLogout = function() {
         const logoutBtn = document.getElementById('logout-icon-btn');
         if (connectBtn) connectBtn.innerText = "Connect Wallet";
         if (logoutBtn) logoutBtn.style.display = 'none';
-        window.location.href = "index.php";
+        window.location.href = "index.html";
     }
 }
 
@@ -219,30 +219,32 @@ async function setupApp(address) {
     const path = window.location.pathname;
 
     if (userData.username === "") {
-        if (!path.includes('register.php') && !path.includes('login.php')) {
-            window.location.href = "register.php"; 
+        if (!path.includes('register.html') && !path.includes('login.html') && !path.endsWith('index.html') && !path.endsWith('/')) {
+            window.location.href = "register.html"; 
             return; 
         }
     } else {
-        if (path.includes('register.php') || path.includes('login.php') || path.endsWith('/') || path.endsWith('index.php')) {
-            window.location.href = "index1.php";
-            return;
+        if (path.includes('register.html') || path.includes('login.html') || path.endsWith('index.html') || path.endsWith('/')) {
+            if (!path.includes('index1.html')) {
+                window.location.href = "index1.html";
+                return;
+            }
         }
     }
 
     updateNavbar(address);
     showLogoutIcon(address); 
 
-    if (path.includes('index1.php')) {
+    if (path.includes('index1.html')) {
         fetchAllData(address);
         start8HourCountdown(); 
     }
 
-    if (path.includes('leadership.php')) {
+    if (path.includes('leadership.html')) {
         fetchLeadershipData(address);
     }
     
-    if (path.includes('history.php')) {
+    if (path.includes('history.html')) {
         window.showHistory('deposit');
     }
 }
@@ -330,7 +332,8 @@ async function loadLeadershipDownlines(address, myRankIdx) {
         }
 
         let html = '';
-        const myROIValue = parseFloat(RANK_DETAILS[myRankIdx].roi.replace('%', ''));
+        const myRank = RANK_DETAILS[myRankIdx] || RANK_DETAILS[0];
+        const myROIValue = parseFloat(myRank.roi.replace('%', ''));
 
         for(let i=0; i < wallets.length; i++) {
             const uA = wallets[i];
@@ -338,7 +341,8 @@ async function loadLeadershipDownlines(address, myRankIdx) {
 
             const dUser = await contract.users(uA);
             const mRankIdx = dUser.rank ? dUser.rank.toNumber() : 0;
-            const mROIValue = parseFloat(RANK_DETAILS[mRankIdx].roi.replace('%', ''));
+            const mRank = RANK_DETAILS[mRankIdx] || RANK_DETAILS[0];
+            const mROIValue = parseFloat(mRank.roi.replace('%', ''));
             const diff = Math.max(myROIValue - mROIValue, 0).toFixed(2);
 
             html += `
@@ -347,7 +351,7 @@ async function loadLeadershipDownlines(address, myRankIdx) {
                     <span class="text-white font-bold">${names[i] || 'User'}</span>
                     <span class="text-[9px] text-gray-400">${uA.substring(0,8)}...</span>
                 </td>
-                <td class="p-4 text-yellow-500 font-bold">${RANK_DETAILS[mRankIdx].name}</td>
+                <td class="p-4 text-yellow-500 font-bold">${mRank.name}</td>
                 <td class="p-4">${format(dUser.workingBalance)}</td> 
                 <td class="p-4 text-green-400">${format(activeDeps[i])}</td>
                 <td class="p-4 text-center">${dUser.directCount || 0}</td>
@@ -400,7 +404,7 @@ async function fetchAllData(address) {
 
         const currentUrl = window.location.href.split('?')[0];
         const pageName = currentUrl.substring(currentUrl.lastIndexOf('/') + 1);
-        const baseUrl = currentUrl.replace(pageName, 'register.php');
+        const baseUrl = currentUrl.replace(pageName, 'register.html');
         const refUrl = `${baseUrl}?ref=${user.username}`;
         if(document.getElementById('refURL')) document.getElementById('refURL').value = refUrl;
 
@@ -475,4 +479,3 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
-
