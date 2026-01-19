@@ -36,6 +36,28 @@ const ERC20_ABI = [
     "function balanceOf(address account) external view returns (uint256)"
 ];
 
+// --- HELPER TO ENSURE INITIALIZATION ---
+async function ensureConnection() {
+    if (!window.ethereum) {
+        alert("Please install MetaMask!");
+        return false;
+    }
+    if (!contract || !signer) {
+        try {
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            const accounts = await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
+            return true;
+        } catch (e) {
+            console.error("Connection failed", e);
+            return false;
+        }
+    }
+    return true;
+}
+
 const calculateGlobalROI = (amount) => {
     const amt = parseFloat(amount);
     if (amt >= 5.665) return 6.00;
@@ -64,13 +86,12 @@ async function init() {
         try {
             provider = new ethers.providers.Web3Provider(window.ethereum);
             const accounts = await provider.listAccounts();
-            signer = provider.getSigner();
             
-            // Initialize Contracts Globally
-            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer); 
-
             if (accounts.length > 0) {
+                signer = provider.getSigner();
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer); 
+
                 if (localStorage.getItem('manualLogout') !== 'true') {
                     await setupApp(accounts[0]);
                 } else {
@@ -78,11 +99,15 @@ async function init() {
                 }
             }
         } catch (error) { console.error("Init Error", error); }
-    } else { alert("Please install MetaMask!"); }
+    } else { 
+        console.log("MetaMask not found. Waiting for user action."); 
+    }
 }
 
 // --- CORE LOGIC ---
 window.handleInvest = async function() {
+    if (!(await ensureConnection())) return;
+
     const amountInput = document.getElementById('deposit-amount');
     const depositBtn = document.getElementById('deposit-btn');
     if (!amountInput || !amountInput.value || amountInput.value < 10) return alert("Min 10 USDT required!");
@@ -112,6 +137,7 @@ window.handleInvest = async function() {
 }
 
 window.handleClaim = async function() {
+    if (!(await ensureConnection())) return;
     try {
         const tx = await contract.withdrawWorking();
         await tx.wait();
@@ -120,6 +146,7 @@ window.handleClaim = async function() {
 }
 
 window.claimNetworkReward = async function(amountInWei) {
+    if (!(await ensureConnection())) return;
     try {
         const tx = await contract.claimNetworkReward(amountInWei);
         await tx.wait();
@@ -129,16 +156,9 @@ window.claimNetworkReward = async function(amountInWei) {
 
 window.handleLogin = async function() {
     try {
-        if (!window.ethereum) return alert("Please install MetaMask!");
+        if (!(await ensureConnection())) return;
         
-        const accounts = await provider.send("eth_requestAccounts", []);
-        if (accounts.length === 0) return;
-        
-        const userAddress = accounts[0]; 
-        
-        signer = provider.getSigner();
-        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-        
+        const userAddress = await signer.getAddress();
         localStorage.removeItem('manualLogout');
         
         const userData = await contract.users(userAddress);
@@ -157,9 +177,12 @@ window.handleLogin = async function() {
 }
 
 window.handleRegister = async function() {
+    if (!(await ensureConnection())) return;
+
     const userField = document.getElementById('reg-username');
     const refField = document.getElementById('reg-referrer');
-    if (!userField || !refField) return;
+    if (!userField || !refField || userField.value.trim() === "") return alert("Please enter username");
+    
     try {
        const tx = await contract.register(userField.value.trim(), refField.value.trim());
         await tx.wait();
@@ -192,7 +215,7 @@ function showLogoutIcon(address) {
 
 async function setupApp(address) {
     const { chainId } = await provider.getNetwork();
-    if (chainId !== CHAIN_ID) { alert("Please switch to BSC Network!"); return; }
+    if (chainId !== CHAIN_ID) { alert("Please switch to BSC Testnet (Chain ID 97)!"); return; }
     
     const userData = await contract.users(address);
     const path = window.location.pathname;
@@ -387,6 +410,7 @@ async function fetchAllData(address) {
 }
 
 window.loadLevelData = async function(level) {
+    if (!(await ensureConnection())) return;
     const tableBody = document.getElementById('team-table-body');
     if(!tableBody) return;
     try {
