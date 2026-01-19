@@ -1,7 +1,7 @@
 let provider, signer, contract, usdtContract;
 
 // --- CONFIGURATION ---
-const CONTRACT_ADDRESS = "0x5e5349C0212196B96e7Df8dca42D861ffA7f78A0"; 
+const CONTRACT_ADDRESS = "0xD2c1A2527c7533AF234e08557176cF098C3AaB61"; 
 const USDT_ADDRESS = "0x3b66b1e08f55af26c8ea14a73da64b6bc8d799de"; // BEP20 USDT
 const CHAIN_ID = 97; // BSC Testnet
 
@@ -482,3 +482,4 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
