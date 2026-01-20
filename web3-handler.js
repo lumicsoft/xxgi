@@ -108,32 +108,70 @@ window.handleInvest = async function() {
 
     const amountInput = document.getElementById('deposit-amount');
     const depositBtn = document.getElementById('deposit-btn');
-    if (!amountInput || !amountInput.value || amountInput.value < 10) return alert("Min 10 USDT required!");
     
+    if (!amountInput || !amountInput.value || parseFloat(amountInput.value) < 10) {
+        return alert("Minimum 10 USDT required!");
+    }
+    
+    // USDT has 18 decimals usually, but check your token
     const amountInWei = ethers.utils.parseUnits(amountInput.value.toString(), 18);
     
     try {
         depositBtn.disabled = true;
-        depositBtn.innerText = "APPROVING...";
         const userAddr = await signer.getAddress();
+
+        // --- STEP 1: BALANCE CHECK ---
+        depositBtn.innerText = "CHECKING BALANCE...";
+        const balance = await usdtContract.balanceOf(userAddr);
+        if (balance.lt(amountInWei)) {
+            depositBtn.disabled = false;
+            depositBtn.innerText = "INVEST NOW";
+            return alert("Aapke wallet mein paryapt USDT nahi hai!");
+        }
+
+        // --- STEP 2: APPROVAL ---
+        depositBtn.innerText = "CHECKING ALLOWANCE...";
         const allowance = await usdtContract.allowance(userAddr, CONTRACT_ADDRESS);
         
         if (allowance.lt(amountInWei)) {
+            depositBtn.innerText = "APPROVING USDT...";
+            console.log("Approving USDT for Contract...");
             const appTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
             await appTx.wait();
+            console.log("Approval Done!");
         }
 
-        depositBtn.innerText = "INVESTING...";
-        const tx = await contract.invest(amountInWei);
+        // --- STEP 3: INVESTMENT ---
+        depositBtn.innerText = "WAITING FOR WALLET...";
+        console.log("Sending Invest Transaction...");
+        
+        // Manual Gas Limit for safety
+        const tx = await contract.invest(amountInWei, {
+            gasLimit: 500000 // Testnet ke liye safe limit
+        });
+        
+        depositBtn.innerText = "PROCESSING...";
         await tx.wait();
+        
+        alert("Investment Successful!");
         location.reload(); 
+        
     } catch (err) {
-        alert("Error: " + (err.reason || err.message));
+        console.error("Full Error Object:", err);
+        
+        // Error handling for user
+        let errorMsg = err.reason || err.message;
+        if (errorMsg.includes("user rejected")) {
+            errorMsg = "Aapne transaction cancel kar di.";
+        } else if (errorMsg.includes("INSUFFICIENT_FUNDS")) {
+            errorMsg = "Fees ke liye BNB nahi hai!";
+        }
+
+        alert("Deposit Failed: " + errorMsg);
         depositBtn.innerText = "INVEST NOW";
         depositBtn.disabled = false;
     }
 }
-
 window.handleClaim = async function() {
     if (!(await ensureConnection())) return;
     try {
@@ -482,4 +520,5 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
