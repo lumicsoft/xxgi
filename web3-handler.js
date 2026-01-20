@@ -146,9 +146,7 @@ window.handleInvest = async function() {
         console.log("Sending Invest Transaction...");
         
         // Manual Gas Limit for safety
-        const tx = await contract.invest(amountInWei, {
-            gasLimit: 500000 // Testnet ke liye safe limit
-        });
+       const tx = await contract.invest(amountInWei);
         
         depositBtn.innerText = "PROCESSING...";
         await tx.wait();
@@ -520,5 +518,6 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
