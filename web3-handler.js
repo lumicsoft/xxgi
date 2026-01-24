@@ -22,18 +22,14 @@ const CONTRACT_ABI = [
     "function register(string _username, string _sponsorUsername) external",
     "function invest(uint256 _amount) external",
     "function withdrawWorking() external",
-    "function withdrawMaturity(uint256 _idx) external nonReentrant",
-    "function transferFund(string _toUsername, uint256 _amount) external",
-    "function getUserDeposits(address _user) external view returns (tuple(uint256 amount, uint256 startTime, uint256 lastAutoClosing, uint256 dailyRate, uint256 duration, bool isWithdrawn, bool active)[])",
-    "function positions(address user, uint256 index) view returns (uint256 amount, uint256 startTime, uint256 lastAutoClosing, uint256 dailyRate, uint256 duration, bool isWithdrawn, bool active)",
+    "function withdrawMaturity(uint256 _idx) external", // nonReentrant hatayein yahan se
     "function getLiveStat(address _user) view returns (uint256 totalAvailable, uint256 pendingMyROI)",
     "function getUserDashboard(address _user) view returns (tuple(uint256 totalLevelIncome, uint256 totalLevelROIIncome, uint256 totalDirectActive, uint256 totalDirectInactive, uint256 totalTeamActive, uint256 totalTeamInactive, uint256 totalIncome, uint256 totalROIIncome, uint256 totalWithdrawal, uint256 availableBalance, uint256 livePendingROI))",
-    "function users(address) view returns (string username, address sponsor, uint256 directCount, uint256 workingBalance, uint256 totalWithdrawn, uint256 statLevelIncome, uint256 statLevelROIIncome, uint256 rank)",
-   "function getLevelTeamDetails(address _account, uint256 _level) view returns (tuple(address userAddress, string username, uint256 package, uint256 joinTime)[])",
+    "function users(address) view returns (string username, address sponsor, uint256 directCount, uint256 workingBalance, uint256 totalWithdrawn, uint256 statLevelIncome, uint256 statLevelROIIncome)",
+    "function getLevelTeamDetails(address _account, uint256 _level) view returns (tuple(address userAddress, string username, uint256 package, uint256 joinTime)[])",
     "function fetchAllUserData(address _user) view returns (tuple(string username, address userAddress, string sponsorName, address sponsorAddress, uint256 firstInvestAmount, uint256 firstInvestTime, uint256 totalSelfInvestment, uint256 totalTeamVolume, uint256 directCount, uint256 directActive, uint256 totalTeam, uint256 teamActive, uint256 teamInactive, uint256 workingBalance, uint256 pendingMaturity, uint256 totalWithdrawn, uint256 availableWithdrawable, uint256 totalLevelIncome, uint256 totalLevelROIIncome))",
-   "function getTransactionHistory(address _user) view returns (tuple(uint8 tType, uint256 amount, uint256 timestamp, string remarks)[])"
-]; // <-- Bracket was missing here
-
+    "function getTransactionHistory(address _user) view returns (tuple(uint8 tType, uint256 amount, uint256 timestamp, string remarks)[])"
+];
 const ERC20_ABI = [
     "function approve(address spender, uint256 amount) external returns (bool)",
     "function allowance(address owner, address spender) external view returns (uint256)",
@@ -538,6 +534,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
