@@ -110,71 +110,79 @@ async function init() {
 }
 
 // --- CORE LOGIC ---
-window.handleInvest = async function() {
-    if (!(await ensureConnection())) return;
-
+async function handleInvest() {
     const amountInput = document.getElementById('deposit-amount');
-    const depositBtn = document.getElementById('deposit-btn');
-    
-    if (!amountInput || !amountInput.value || parseFloat(amountInput.value) < 10) {
-        return alert("Minimum 10 USDT required!");
+    const amount = amountInput.value;
+    const btn = document.getElementById('deposit-btn');
+
+    // Basic Validations
+    if (!amount || parseFloat(amount) < 10) {
+        alert("Minimum investment is 10 USDT");
+        return;
     }
-    
-    // USDT has 18 decimals usually, but check your token
-    const amountInWei = ethers.utils.parseUnits(amountInput.value.toString(), 18);
-    
+
+    if (!window.signer || !window.contract) {
+        alert("Please connect your wallet first!");
+        return;
+    }
+
     try {
-        depositBtn.disabled = true;
-        const userAddr = await signer.getAddress();
+        // UI Loading State
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-pulse">WAITING FOR APPROVAL...</span>`;
 
-        // --- STEP 1: BALANCE CHECK ---
-        depositBtn.innerText = "CHECKING BALANCE...";
-        const balance = await usdtContract.balanceOf(userAddr);
-        if (balance.lt(amountInWei)) {
-            depositBtn.disabled = false;
-            depositBtn.innerText = "INVEST NOW";
-            return alert("Aapke wallet mein paryapt USDT nahi hai!");
-        }
+        // 1. USDT Contract Setup (Make sure USDT_ADDRESS is defined)
+        const USDT_ABI = [
+            "function approve(address spender, uint256 amount) public returns (bool)",
+            "function allowance(address owner, address spender) public view returns (uint256)"
+        ];
+        const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, window.signer);
 
-        // --- STEP 2: APPROVAL ---
-        depositBtn.innerText = "CHECKING ALLOWANCE...";
-        const allowance = await usdtContract.allowance(userAddr, CONTRACT_ADDRESS);
-        
+        // 2. Amount Conversion (18 Decimals)
+        const amountInWei = ethers.utils.parseUnits(amount.toString(), 18);
+        const userAddress = await window.signer.getAddress();
+
+        // 3. Check Allowance (Kya pehle se permission hai?)
+        const allowance = await usdtContract.allowance(userAddress, window.contract.address);
+
         if (allowance.lt(amountInWei)) {
-            depositBtn.innerText = "APPROVING USDT...";
-            console.log("Approving USDT for Contract...");
-            const appTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
-            await appTx.wait();
-            console.log("Approval Done!");
+            const approveTx = await usdtContract.approve(window.contract.address, amountInWei);
+            await approveTx.wait();
+            console.log("USDT Approved");
         }
 
-        // --- STEP 3: INVESTMENT ---
-        depositBtn.innerText = "WAITING FOR WALLET...";
-        console.log("Sending Invest Transaction...");
+        // 4. Final Investment Call
+        btn.innerHTML = `<span class="animate-pulse">CONFIRMING DEPOSIT...</span>`;
         
-        // Manual Gas Limit for safety
-       const tx = await contract.invest(amountInWei);
-        
-        depositBtn.innerText = "PROCESSING...";
+        // Gas limit manually set ki hai kyunki loops wale contract mein estimation fail ho sakta hai
+        const tx = await window.contract.invest(amountInWei, {
+            gasLimit: 500000 
+        });
+
+        console.log("Transaction Hash:", tx.hash);
         await tx.wait();
-        
-        alert("Investment Successful!");
-        location.reload(); 
-        
-    } catch (err) {
-        console.error("Full Error Object:", err);
-        
-        // Error handling for user
-        let errorMsg = err.reason || err.message;
-        if (errorMsg.includes("user rejected")) {
-            errorMsg = "Aapne transaction cancel kar di.";
-        } else if (errorMsg.includes("INSUFFICIENT_FUNDS")) {
-            errorMsg = "Fees ke liye BNB nahi hai!";
-        }
 
-        alert("Deposit Failed: " + errorMsg);
-        depositBtn.innerText = "INVEST NOW";
-        depositBtn.disabled = false;
+        // Success Logic
+        alert("Success! Your investment of " + amount + " USDT is activated.");
+        amountInput.value = "";
+        if (typeof loadDashboardData === "function") loadDashboardData();
+
+    } catch (err) {
+        console.error("Investment Error:", err);
+        
+        // User-friendly error messages
+        if (err.code === 4001) {
+            alert("Transaction cancelled by user.");
+        } else if (err.message.includes("insufficient funds")) {
+            alert("Insufficient USDT or Native gas fee.");
+        } else {
+            alert("Transaction Failed! Check console for details.");
+        }
+    } finally {
+        // Reset Button UI
+        btn.disabled = false;
+        btn.innerHTML = `DEPOSIT NOW <i data-lucide="arrow-up-right" class="w-4 h-4 inline-block ml-1"></i>`;
+        lucide.createIcons();
     }
 }
 window.handleClaim = async function() {
@@ -535,6 +543,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
