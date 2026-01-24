@@ -173,25 +173,31 @@ async function loadLevelData(level) {
     const tableBody = document.getElementById('team-table-body');
     if (!window.contract || !window.signer || !tableBody) return;
 
+    // Loading State
     tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-yellow-500 orbitron animate-pulse text-xs">SCANNING BLOCKCHAIN LEVEL ${level}...</td></tr>`;
 
     try {
         const address = await window.signer.getAddress();
+        
+        // Contract call - Yeh ab Struct Array return karega
         const members = await window.contract.getLevelTeamDetails(address, level);
 
         if (!members || members.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 italic uppercase">No Members in Level ${level}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 italic uppercase">No Members Found in Level ${level}</td></tr>`;
             return;
         }
 
         let html = '';
         members.forEach((m) => {
-            const pkgValue = format(m.package);
+            // Contract variables mapping:
+            // m.userAddress, m.username, m.package, m.joinTime
+            
+            const pkgValue = format(m.package); // package amount from contract
             const isUserActive = parseFloat(pkgValue) > 0;
 
+            // joinTime conversion (Contract uses uint256 timestamp)
             let joinDate = "---";
             if (m.joinTime && m.joinTime > 0) {
-                // toNumber() ethers ke BigNumber ke liye zaroori hai
                 joinDate = new Date(m.joinTime.toNumber() * 1000).toLocaleDateString();
             }
 
@@ -223,8 +229,8 @@ async function loadLevelData(level) {
         tableBody.innerHTML = html;
 
     } catch (err) {
-        console.error("Critical Sync Error:", err);
-        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Blockchain Error: Syncing...</td></tr>`;
+        console.error("Contract Sync Error:", err);
+        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Sync Error: Check ABI & Network</td></tr>`;
     }
 }
 // Page load hote hi checking shuru karein
@@ -244,6 +250,7 @@ window.copyLink = function() {
 </script>
 </body>
 </html>
+
 
 
 
