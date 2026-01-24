@@ -115,17 +115,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="components.js"></script> 
     <script src="web3-handler.js"></script>
-   <script>
+  <script>
 lucide.createIcons();
 
-// 1. Yeh function check karega ki wallet connect hua ya nahi
+// 1. Wallet sync check karne ka loop
 async function checkConnection() {
-    // Agar web3-handler.js ne contract setup kar diya hai
-    if (typeof window.contract !== 'undefined' && window.signer) {
+    if (window.contract && window.signer) {
         console.log("Wallet Sync Successful!");
         loadReferralPageData();
     } else {
-        // Har 1 second mein dobara check karega jab tak connect na ho jaye
+        // Har 1 second mein check karega
         setTimeout(checkConnection, 1000);
     }
 }
@@ -135,35 +134,33 @@ async function loadReferralPageData() {
     try {
         const address = await window.signer.getAddress();
         
-        // Blockchain se data mangwana
-        const [userData, dash] = await Promise.all([
-            window.contract.users(address),
-            window.contract.getUserDashboard(address)
-        ]);
+        // Aapke web3-handler.js ka "fetchAllUserData" function use kar rahe hain
+        // Yeh sabse best hai kyunki isme saara data ek baar mein mil jata hai
+        const data = await window.contract.fetchAllUserData(address);
 
         // Referral Link set karna
         const baseUrl = window.location.origin + "/register.html";
-        if(userData.username && userData.username !== "") {
-            document.getElementById('refURL').value = `${baseUrl}?ref=${userData.username}`;
+        if(data.username && data.username !== "") {
+            document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
         } else {
             document.getElementById('refURL').value = "User not registered";
         }
 
-        // Stats Update (IDs should match your HTML)
-        document.getElementById('direct-count').innerText = dash.totalDirectActive.toString();
-        document.getElementById('team-count').innerText = dash.totalTeamActive.toString();
-        document.getElementById('total-direct-count').innerText = dash.totalDirect.toString();
-        document.getElementById('total-team-count').innerText = dash.totalTeam.toString();
-        
-        // Inactive calculation
-        let inactive = parseInt(dash.totalTeam) - parseInt(dash.totalTeamActive);
-        document.getElementById('inactive-team-count').innerText = inactive > 0 ? inactive : "0";
+        // --- Stats Update (IDs should match your HTML) ---
+        // Helper function taaki agar ID missing ho to error na aaye
+        const setVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
 
-        // Income Update (USDT format)
-        document.getElementById('direct-earnings').innerText = ethers.utils.formatUnits(dash.totalLevelIncome, 18);
-        document.getElementById('level-earnings').innerText = ethers.utils.formatUnits(dash.totalLevelROIIncome, 18);
+        setVal('direct-count', data.directActive.toString());
+        setVal('team-count', data.teamActive.toString());
+        setVal('total-direct-count', data.directCount.toString());
+        setVal('total-team-count', data.totalTeam.toString());
+        setVal('inactive-team-count', data.teamInactive.toString());
 
-        // Pehla level automatically load karein
+        // Income Update (Aapke handler ka "format" function use kar rahe hain)
+        setVal('direct-earnings', format(data.totalLevelROIIncome));
+        setVal('level-earnings', format(data.totalLevelIncome));
+
+        // Pehla level load karein
         loadLevelData(1);
 
     } catch (err) { 
@@ -174,55 +171,65 @@ async function loadReferralPageData() {
 // 3. Network table load karne ka function
 async function loadLevelData(level) {
     const tableBody = document.getElementById('team-table-body');
-    if (!window.contract || !window.signer) return;
+    if (!window.contract || !window.signer || !tableBody) return;
 
     tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-yellow-500 orbitron animate-pulse text-xs">SCANNING LEVEL ${level}...</td></tr>`;
 
     try {
         const address = await window.signer.getAddress();
-        const members = await window.contract.getLevelTeamDetails(address, level);
+        const res = await window.contract.getLevelTeamDetails(address, level);
 
-        if (!members || members.length === 0) {
+        // Check if data exists in arrays
+        if (!res.wallets || res.wallets.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 italic">No users in Level ${level}</td></tr>`;
             return;
         }
 
-        tableBody.innerHTML = members.map(m => {
-            const pkg = ethers.utils.formatUnits(m.package, 18);
-            return `
+        let html = '';
+        for(let i=0; i < res.wallets.length; i++) {
+            const pkgValue = format(res.activeDeps[i]);
+            html += `
                 <tr class="border-b border-white/5 hover:bg-white/5 transition-colors text-[11px]">
                     <td class="p-4">
                         <div class="flex flex-col">
-                            <span class="text-white font-bold">${m.username || 'N/A'}</span>
-                            <span class="text-[9px] text-gray-500 font-mono">${m.userAddress.substring(0,10)}...</span>
+                            <span class="text-white font-bold">${res.names[i] || 'N/A'}</span>
+                            <span class="text-[9px] text-gray-500 font-mono">${res.wallets[i].substring(0,10)}...</span>
                         </div>
                     </td>
-                    <td class="p-4 font-black text-white">${pkg} USDT</td>
-                    <td class="p-4 text-gray-500">${m.joinTime > 0 ? new Date(m.joinTime * 1000).toLocaleDateString() : '---'}</td>
+                    <td class="p-4 font-black text-white">${pkgValue} USDT</td>
+                    <td class="p-4 text-gray-400">Level ${level}</td>
                     <td class="p-4">
-                        <span class="${parseFloat(pkg) > 0 ? 'text-green-400' : 'text-red-500'} font-bold">
-                            ${parseFloat(pkg) > 0 ? 'ACTIVE' : 'INACTIVE'}
+                        <span class="${parseFloat(pkgValue) > 0 ? 'text-green-400' : 'text-red-500'} font-bold">
+                            ${parseFloat(pkgValue) > 0 ? 'ACTIVE' : 'INACTIVE'}
                         </span>
                     </td>
                 </tr>
             `;
-        }).join('');
+        }
+        tableBody.innerHTML = html;
+
     } catch (err) {
+        console.error("Table Error:", err);
         tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Sync Error</td></tr>`;
     }
 }
 
 // Page load hote hi checking shuru karein
-window.addEventListener('load', checkConnection);
+window.addEventListener('load', () => {
+    setTimeout(checkConnection, 500);
+});
 
 // Copy function
 window.copyLink = function() {
     const copyText = document.getElementById("refURL");
-    if(copyText.value.includes("Connecting")) return alert("Please wait for wallet connection");
+    if(!copyText || copyText.value.includes("Connecting") || copyText.value === "") return;
+    
+    copyText.select();
     navigator.clipboard.writeText(copyText.value);
     alert("Referral Link Copied!");
 }
 </script>
 </body>
 </html>
+
 
