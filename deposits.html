@@ -64,7 +64,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="components.js"></script>
-    <script src="web3-handler.js"></script<script>
+    <script src="web3-handler.js"></script>
 
     <script>
         async function loadActiveDeposits() {
@@ -72,12 +72,13 @@
             const capDisplay = document.getElementById('total-active-capital');
             const profitDisplay = document.getElementById('total-daily-profit');
             
-            // Check karein ki kya web3-handler ne contract initialize kar diya hai
+            // 1. Connection check logic
             if (!window.contract || !window.signer) {
-                console.log("Re-trying connection...");
-                // Agar init nahi hua toh ensureConnection call karein (jo aapke web3-handler mein hai)
+                console.log("Waiting for Web3...");
+                // Agar connect nahi hai toh manual connect try karein
                 if (typeof ensureConnection === "function") {
-                    await ensureConnection();
+                    const connected = await ensureConnection();
+                    if(!connected) return;
                 }
                 setTimeout(loadActiveDeposits, 1000);
                 return;
@@ -86,7 +87,7 @@
             try {
                 const address = await window.signer.getAddress();
                 
-                // 1. Total Capital ke liye dashboard data
+                // 2. Dashboard data fetch karein
                 const data = await window.contract.fetchAllUserData(address);
                 if(capDisplay) capDisplay.innerText = parseFloat(ethers.utils.formatUnits(data.totalSelfInvestment, 18)).toFixed(2);
 
@@ -94,24 +95,27 @@
                 let totalDailyYield = 0;
                 let hasNodes = false;
 
-                // 2. Positions loop
+                // 3. Positions loop (max 50)
                 for (let i = 0; i < 50; i++) { 
                     try {
                         const p = await window.contract.positions(address, i);
                         const amount = parseFloat(ethers.utils.formatUnits(p.amount, 18));
                         
+                        // Agar amount 0 hai, matlab iske aage aur positions nahi hain
                         if (amount <= 0) break;
 
                         hasNodes = true;
                         const startTime = p.startTime.toNumber();
-                        const rate = p.dailyRate.toNumber();
+                        const rate = p.dailyRate.toNumber(); // base 10000 (100 = 1%)
                         const duration = p.duration.toNumber();
                         const isWithdrawn = p.isWithdrawn;
                         const isActive = p.active;
 
+                        // Daily Profit calculation
                         const nodeDailyYield = (amount * rate) / 10000;
                         if(isActive && !isWithdrawn) totalDailyYield += nodeDailyYield;
 
+                        // Progress logic
                         const currentTime = Math.floor(Date.now() / 1000);
                         let progress = (((currentTime - startTime) / (duration * 86400)) * 100).toFixed(2);
                         if (progress > 100) progress = 100;
@@ -128,9 +132,10 @@
                                     </h3>
                                 </div>
                                 <span class="${isActive && !isWithdrawn ? 'status-badge' : 'bg-white/10 text-gray-500 border border-white/10 px-3 py-1 text-[8px] rounded-full'}">
-                                    ${isWithdrawn ? 'Withdrawn' : (isActive ? 'Mining' : 'Matured')}
+                                    ${isWithdrawn ? 'WITHDRAWN' : (isActive ? 'MINING' : 'MATURED')}
                                 </span>
                             </div>
+
                             <div class="grid grid-cols-2 gap-3 mb-6">
                                 <div class="bg-white/5 border border-white/10 rounded-xl p-3">
                                     <p class="text-[8px] text-gray-500 uppercase font-black mb-1">Daily ROI</p>
@@ -141,53 +146,58 @@
                                     <p class="text-xs font-bold text-white">${(rate/100).toFixed(2)}%</p>
                                 </div>
                             </div>
+
                             <div class="space-y-2">
                                 <div class="flex justify-between text-[10px] font-bold orbitron">
-                                    <span class="text-gray-500 uppercase">Progress</span>
+                                    <span class="text-gray-400 uppercase">Progress</span>
                                     <span class="text-white">${progress}%</span>
                                 </div>
                                 <div class="progress-container">
                                     <div class="progress-bar" style="width: ${progress}%"></div>
                                 </div>
                             </div>
+
                             ${progress >= 100 && !isWithdrawn ? `
-                                <button onclick="withdrawMaturityNode(${i})" class="w-full mt-6 py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400">
+                                <button onclick="withdrawMaturityNode(${i})" class="w-full mt-6 py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400 transition-all">
                                     CLAIM PRINCIPAL
                                 </button>
-                            ` : ''}
+                            ` : `
+                                <div class="mt-6 py-2 text-center bg-white/5 border border-white/5 rounded-xl">
+                                    <p class="text-[8px] text-gray-500 font-black orbitron uppercase italic">Running Cycle</p>
+                                </div>
+                            `}
                         </div>`;
                     } catch (err) { break; }
                 }
 
                 if(profitDisplay) profitDisplay.innerText = totalDailyYield.toFixed(2);
-                grid.innerHTML = hasNodes ? html : `<div class="col-span-full text-center py-20 text-gray-500 orbitron text-xs">NO ACTIVE DEPOSITS</div>`;
+                grid.innerHTML = hasNodes ? html : `<div class="col-span-full text-center py-20 text-gray-500 orbitron text-xs">NO ACTIVE DEPOSITS FOUND</div>`;
+                
                 if (window.lucide) lucide.createIcons();
 
             } catch (err) {
-                console.error(err);
-                grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500">SYNC ERROR</div>`;
+                console.error("Fetch Error:", err);
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500">FAILED TO LOAD DATA</div>`;
             }
         }
 
         async function withdrawMaturityNode(idx) {
             try {
+                if(!window.contract) return;
                 const tx = await window.contract.withdrawMaturity(idx);
                 await tx.wait();
-                alert("Success!");
+                alert("Success! Principal returned to balance.");
                 loadActiveDeposits();
-            } catch (err) { alert("Failed: " + (err.reason || "Error")); }
+            } catch (err) { 
+                console.error(err);
+                alert("Withdraw Failed: " + (err.reason || "Check gas or wallet")); 
+            }
         }
 
-        // Dashboard sync ke baad load karein
-        window.addEventListener('load', () => setTimeout(loadActiveDeposits, 2000));
+        // Window load par thoda delay dekar call karein
+        window.addEventListener('load', () => {
+            setTimeout(loadActiveDeposits, 1500);
+        });
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
