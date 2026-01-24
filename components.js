@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='index1.html'">Dashboard</button>
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='deposits.html'">Position</button>
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='referral.html'">Referral</button>
-                <button class="gold-btn !py-2 !px-5" onclick="location.href='leadership.html'">Leadership</button>
+                
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='history.html'">History</button>
             </div>
             
@@ -80,12 +80,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </div>
                     <span class="text-[9px] font-bold orbitron">TEAM</span>
                 </a>
-                <a href="leadership.html" class="flex flex-col items-center gap-1 transition-all ${window.location.pathname.includes('leadership.html') ? 'text-yellow-500 scale-110' : 'text-gray-400'}">
-                    <div class="p-2 rounded-xl ${window.location.pathname.includes('leadership.html') ? 'bg-yellow-500/10' : ''}">
-                        <i data-lucide="award" class="w-5 h-5"></i>
-                    </div>
-                    <span class="text-[9px] font-bold orbitron">RANK</span>
-                </a>
+               
+              
                 <a href="history.html" class="flex flex-col items-center gap-1 transition-all ${window.location.pathname.includes('history.html') ? 'text-yellow-500 scale-110' : 'text-gray-400'}">
                     <div class="p-2 rounded-xl ${window.location.pathname.includes('history.html') ? 'bg-yellow-500/10' : ''}">
                         <i data-lucide="history" class="w-5 h-5"></i>
@@ -113,4 +109,5 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
+
 });
