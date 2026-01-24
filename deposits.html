@@ -66,114 +66,113 @@
     <script src="components.js"></script>
     <script src="web3-handler.js"></script>
     <script>
-    // ROI Calculation according to EXGI Contract logic (0.5% Daily or as per your plan)
-    function getGlobalROI(totalAmount) {
-        // EXGI default is often 0.5% (0.005) or adjusted by package
-        return 0.50; 
-    }
-
     async function loadActiveDeposits() {
         const grid = document.getElementById('deposits-grid');
+        const capDisplay = document.getElementById('total-active-capital');
+        const profitDisplay = document.getElementById('total-daily-profit');
         
-        if (typeof window.contract === 'undefined') {
+        // 1. Connection Check
+        if (!window.contract || !window.signer) {
             setTimeout(loadActiveDeposits, 1000);
             return;
         }
 
         try {
             const address = await window.signer.getAddress();
-            const userData = await window.contract.users(address);
             
-            // Format from 18 decimals (USDT in your contract)
-            const totalActive = parseFloat(ethers.utils.formatUnits(userData.package, 18));
-            document.getElementById('total-active-capital').innerText = totalActive.toFixed(2);
+            // 2. Fetch Data using your fetchAllUserData function
+            const data = await window.contract.fetchAllUserData(address);
+            
+            // Convert amounts from Wei
+            const totalActive = parseFloat(ethers.utils.formatUnits(data.totalSelfInvestment, 18));
+            const firstInvestTime = data.firstInvestTime.toNumber();
+            const pendingMaturity = parseFloat(ethers.utils.formatUnits(data.pendingMaturity, 18));
+
+            capDisplay.innerText = totalActive.toFixed(2);
 
             if (totalActive <= 0) {
-                document.getElementById('total-daily-profit').innerText = `0.00`;
-                grid.innerHTML = `<div class="col-span-full text-center py-20 text-gray-500 orbitron text-xs border border-dashed border-white/10 rounded-3xl">NO ACTIVE DEPOSITS FOUND</div>`;
+                profitDisplay.innerText = `0.00`;
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-20 border border-dashed border-white/10 rounded-3xl">
+                        <i data-lucide="database-zap" class="w-10 h-10 text-gray-700 mx-auto mb-3"></i>
+                        <p class="text-gray-500 orbitron text-xs uppercase tracking-widest">No Active Investment Found</p>
+                    </div>`;
+                lucide.createIcons();
                 return;
             }
 
-            const dailyRate = getGlobalROI(totalActive);
-            const totalDailyProfit = (totalActive * (dailyRate / 100));
-            document.getElementById('total-daily-profit').innerText = totalDailyProfit.toFixed(2);
+            // 3. ROI Calculation (Contract ROI logic)
+            // Agar 500 din ka cycle hai (Example: 200% profit)
+            const dailyROI = 0.50; // Aapka daily % percentage
+            const dailyProfit = (totalActive * (dailyROI / 100));
+            profitDisplay.innerText = dailyProfit.toFixed(2);
 
-            let html = '';
+            // 4. Progress Logic
+            const startTime = firstInvestTime;
+            const currentTime = Math.floor(Date.now() / 1000);
+            const totalDurationDays = 400; // Plan duration (Change as per contract)
+            const secondsPassed = currentTime - startTime;
+            const daysPassed = secondsPassed / 86400;
             
-            // EXGI contract usually handles one main package or multiple. 
-            // If using the 'positions' logic from web3-handler:
-            const deposits = await window.contract.getUserDeposits(address);
+            let progress = ((daysPassed / totalDurationDays) * 100).toFixed(2);
+            if (progress > 100) progress = 100;
+            if (progress < 0) progress = 0;
 
-            if (deposits.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-20 text-gray-500">NO ACTIVE POSITIONS</div>`;
-                return;
-            }
+            // 5. Render Card
+            grid.innerHTML = `
+                <div class="premium-border p-8 hover:translate-y-[-5px] transition-all duration-300 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-yellow-500/10 px-4 py-1 rounded-bl-xl border-b border-l border-white/10">
+                        <span class="text-[9px] font-black text-yellow-500 uppercase">Master Node</span>
+                    </div>
 
-            deposits.forEach((dep, index) => {
-                const amount = parseFloat(ethers.utils.formatUnits(dep.amount, 18));
-                const startTime = parseInt(dep.timestamp);
-                const currentTime = Math.floor(Date.now() / 1000);
-                
-                // EXGI usually runs for 400% (800 days at 0.5%)
-                const totalDays = 800; 
-                const secondsPassed = currentTime - startTime;
-                const daysPassed = secondsPassed / 86400;
-                
-                let progress = ((daysPassed / totalDays) * 100).toFixed(2);
-                if (progress > 100) progress = 100;
-                if (progress < 0) progress = 0;
-
-                const cardDailyYield = (amount * (dailyRate / 100));
-
-                html += `
-                <div class="premium-border p-8 hover:translate-y-[-5px] transition-all duration-300">
                     <div class="flex justify-between items-start mb-6">
                         <div>
-                            <h3 class="text-xl font-black orbitron italic text-white flex items-center">
-                                <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon-sm">
-                                ${amount.toFixed(2)} USDT
+                            <h3 class="text-2xl font-black orbitron italic text-white flex items-center">
+                                <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon">
+                                ${totalActive.toFixed(2)}
                             </h3>
-                            <p class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest mt-1 italic">Node #${index + 1} | ${dailyRate}% Daily</p>
+                            <p class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest mt-1 italic">Active Staking Plan</p>
                         </div>
-                        <span class="status-badge">Active</span>
+                        <span class="status-badge">Running</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 mb-8">
                         <div class="bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
-                            <p class="text-[9px] font-black text-gray-400 uppercase mb-1">Start Date</p>
-                            <p class="text-[10px] font-black orbitron text-yellow-500">${new Date(startTime * 1000).toLocaleDateString()}</p>
+                            <p class="text-[9px] font-black text-gray-400 uppercase mb-1">Entry Date</p>
+                            <p class="text-[10px] font-black orbitron text-white">${new Date(startTime * 1000).toLocaleDateString()}</p>
                         </div>
                         <div class="bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
-                            <p class="text-[9px] font-black text-gray-400 uppercase mb-1">Daily Yield</p>
-                            <p class="text-lg font-black orbitron text-green-400 flex items-center justify-center">
-                                <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon-sm">
-                                ${cardDailyYield.toFixed(2)}
-                            </p>
+                            <p class="text-[9px] font-black text-gray-400 uppercase mb-1">Remaining</p>
+                            <p class="text-[10px] font-black orbitron text-green-400">${pendingMaturity.toFixed(2)} USDT</p>
                         </div>
                     </div>
 
                     <div class="space-y-4">
                         <div class="flex justify-between text-[11px] font-black orbitron uppercase">
-                            <span class="text-gray-400 italic">Cycle Progress</span>
+                            <span class="text-gray-400 italic">Maturity Progress</span>
                             <span class="text-white">${progress}%</span>
                         </div>
                         <div class="progress-container">
                             <div class="progress-bar" style="width: ${progress}%"></div>
                         </div>
+                        <div class="flex justify-between text-[8px] font-bold text-gray-500 uppercase">
+                            <span>Started</span>
+                            <span>Target 200%</span>
+                        </div>
                     </div>
-                </div>`;
-            });
+                </div>
+            `;
 
-            grid.innerHTML = html;
-            if (window.lucide) lucide.createIcons();
+            lucide.createIcons();
 
         } catch (err) {
-            console.error(err);
-            grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500">CONTRACT SYNC ERROR</div>`;
+            console.error("Deposits Page Error:", err);
+            grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500 orbitron text-xs">FAILED TO LOAD BLOCKCHAIN DATA</div>`;
         }
     }
 
     window.addEventListener('load', () => setTimeout(loadActiveDeposits, 1500));
-    </script>
+</script>
 </body>
+
 </html>
