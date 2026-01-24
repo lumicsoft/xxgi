@@ -171,77 +171,67 @@ async function loadReferralPageData() {
 // 3. Network table load karne ka function
 async function loadLevelData(level) {
     const tableBody = document.getElementById('team-table-body');
-    if(!tableBody) return;
-    
-    // Loading State
-    tableBody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-yellow-500 orbitron animate-pulse text-xs">SCANNING BLOCKCHAIN LEVEL ${level}...</td></tr>`;
+    if (!window.contract || !window.signer || !tableBody) return;
+
+    // Loading indicator
+    tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-yellow-500 orbitron animate-pulse text-xs">SCANNING BLOCKCHAIN LEVEL ${level}...</td></tr>`;
 
     try {
         const address = await window.signer.getAddress();
-        // Contract call
-        const res = await window.contract.getLevelTeamDetails(address, level);
         
-        // --- EXACT MAPPING FROM YOUR WORKING CODE ---
-        const names = res.names || res[0] || [];
-        const wallets = res.wallets || res[1] || [];
-        const joinDates = res.joinDates || res[2] || [];
-        const activeDeps = res.activeDeps || res[3] || [];
-        const teamTotalDeps = res.teamTotalDeps || res[4] || [];
+        // Contract function: getLevelTeamDetails(address, uint256)
+        // Returns: TeamMember[] { address userAddress, string username, uint256 package, uint256 joinTime }
+        const members = await window.contract.getLevelTeamDetails(address, level);
 
-        if (!wallets || wallets.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-500 italic uppercase">No Users Found in Level ${level}</td></tr>`;
+        if (!members || members.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 italic uppercase">No Members in Level ${level}</td></tr>`;
             return;
         }
 
         let html = '';
-        for (let i = 0; i < wallets.length; i++) {
-            const uA = wallets[i];
+        members.forEach((m) => {
+            // Ethers.js automatically maps struct keys: m.userAddress, m.username, m.package, m.joinTime
             
-            // Skip zero address
-            if (!uA || uA === "0x0000000000000000000000000000000000000000") continue;
+            // Format package amount (USDT)
+            const pkgValue = format(m.package); // format function from web3-handler.js
+            const isUserActive = parseFloat(pkgValue) > 0;
 
-            // format() function web3-handler.js se uthayega
-            const activeAmt = format(activeDeps[i]);
-            const teamVol = format(teamTotalDeps[i]);
-            
-            // Date formatting
-            let joinDate = "N/A";
-            if(joinDates[i]) {
-                joinDate = new Date(joinDates[i].toNumber() * 1000).toLocaleDateString();
+            // Date Formatting
+            let joinDate = "---";
+            if (m.joinTime && m.joinTime > 0) {
+                joinDate = new Date(m.joinTime.toNumber() * 1000).toLocaleDateString();
             }
-            
-            const isUserActive = parseFloat(activeAmt) > 0;
-            const statusLabel = isUserActive 
-                ? '<span class="text-green-400 font-bold text-[10px] animate-pulse">[ACTIVE]</span>' 
-                : '<span class="text-red-500 font-bold text-[10px]">[INACTIVE]</span>';
 
             html += `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors text-[11px]">
-                <td class="p-4 font-mono text-yellow-500">
-                    <div class="flex flex-col">
-                        <span class="text-white font-bold">${uA.substring(0, 8)}...${uA.substring(34)}</span>
-                        <span class="text-[9px] text-gray-500 font-sans italic">${names[i] || 'N/A'}</span>
-                    </div>
-                </td>
-                <td class="p-4 font-bold text-gray-400">Lvl ${level}</td>
-                <td class="p-4 font-black text-white">${activeAmt}</td>
-                <td class="p-4 text-gray-400">${teamVol}</td>
-                <td class="p-4">
-                    <div class="flex flex-col">
-                        <span class="text-white font-bold">${activeAmt} USDT</span>
-                        ${statusLabel}
-                    </div>
-                </td>
-                <td class="p-4 text-yellow-500 italic font-black uppercase text-[9px]">RECORDED</td>
-                <td class="p-4 text-gray-500 font-mono">${joinDate}</td>
-            </tr>`;
-        }
-        
-        tableBody.innerHTML = html || `<tr><td colspan="7" class="p-10 text-center text-gray-500">No Active Data</td></tr>`;
+                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors text-[11px]">
+                    <td class="p-4">
+                        <div class="flex flex-col">
+                            <span class="text-white font-bold orbitron tracking-tight">${m.username || 'N/A'}</span>
+                            <span class="text-[9px] text-gray-500 font-mono">${m.userAddress.substring(0, 10)}...${m.userAddress.substring(38)}</span>
+                        </div>
+                    </td>
+                    <td class="p-4 font-black text-white">${pkgValue} USDT</td>
+                    <td class="p-4 text-gray-400 font-mono">${joinDate}</td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-1.5">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${isUserActive ? 'bg-green-400' : 'bg-red-400'} opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 ${isAlive ? 'bg-green-500' : 'bg-red-500'}"></span>
+                            </span>
+                            <span class="${isUserActive ? 'text-green-400' : 'text-red-500'} font-bold">
+                                ${isUserActive ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tableBody.innerHTML = html;
 
     } catch (err) {
-        console.error("Team Table Error:", err);
-        tableBody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500">Blockchain Sync Error</td></tr>`;
+        console.error("Critical Sync Error:", err);
+        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Blockchain Error: Check ABI</td></tr>`;
     }
 }
 
@@ -262,6 +252,7 @@ window.copyLink = function() {
 </script>
 </body>
 </html>
+
 
 
 
