@@ -7,15 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style1.css">
     <style>
         .withdraw-btn { background: linear-gradient(135deg, #ff416c, #ff4b2b) !important; color: white !important; }
+        .animate-spin-slow { animation: spin 8s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .deposit-input-box { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; width: 100%; color: white; outline: none; transition: 0.3s; }
         .deposit-input-box:focus { border-color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
         .luxury-table { width: 100%; border-collapse: collapse; }
         .luxury-table th { padding: 15px; text-align: left; border-bottom: 2px solid rgba(234, 179, 8, 0.2); color: #eab308; font-size: 12px; font-family: 'Orbitron'; }
         .luxury-table td { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; font-weight: 600; }
         .premium-border { border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); }
-        .gold-btn { transition: all 0.3s; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .gold-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(234, 179, 8, 0.3); }
         .gold-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px #eab308; }
     </style>
 </head>
@@ -117,6 +120,23 @@
             </div>
         </div>
 
+        <div class="premium-border mb-8 p-6 md:p-8">
+            <h3 class="text-xl font-black orbitron mb-6 uppercase italic"><span class="text-yellow-500">Daily Returns</span> by Level</h3>
+            <div class="overflow-x-auto">
+                <table class="luxury-table">
+                    <thead>
+                        <tr><th>Investment Range (USDT)</th><th>Daily Return</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>10 - 500 USDT</td><td class="text-green-400 font-bold">5.00%</td></tr>
+                        <tr><td>501 - 2000 USDT</td><td class="text-green-400 font-bold">5.25%</td></tr>
+                        <tr class="bg-yellow-500/5"><td>2001 - 5000 USDT 🔥</td><td class="text-yellow-500 font-bold">5.50%</td></tr>
+                        <tr><td>5001 - 10000 USDT</td><td class="text-green-400 font-bold">5.75%</td></tr>
+                        <tr class="bg-yellow-500/10"><td class="text-yellow-400 font-black text-lg">≥ 10001 USDT 🔥</td><td class="text-yellow-400 font-black text-lg">6.00%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
@@ -125,19 +145,33 @@
     <script>
         lucide.createIcons();
 
-        // 1. Unified Format Function (Use window to avoid redeclaration issues)
-        window.formatValue = (val) => {
+        // Safety: Helper to format ether values
+        const format = (val) => {
             if(!val) return "0.00";
             try {
                 return parseFloat(ethers.utils.formatEther(val)).toFixed(2);
-            } catch(e) { return "0.00"; }
+            } catch(e) {
+                return "0.00";
+            }
         };
 
-        // 2. Data Loader
+        // 1. Connection Watcher
+        async function watchConnection() {
+            if (window.contract && window.signer) {
+                console.log("Dashboard Connected Successfully!");
+                loadDashboardData();
+                startTimer();
+            } else {
+                // Keep checking until wallet is ready via web3-handler.js
+                setTimeout(watchConnection, 1000);
+            }
+        }
+
+        // 2. Data Loader (Uses your Smart Contract functions)
         async function loadDashboardData() {
-            if (!window.contract || !window.signer) return;
             try {
                 const address = await window.signer.getAddress();
+                // Calling the big function from your contract
                 const data = await window.contract.fetchAllUserData(address);
 
                 const setVal = (id, val) => { 
@@ -145,28 +179,34 @@
                     if(el) el.innerText = val; 
                 };
 
-                setVal('total-deposit-display', window.formatValue(data.totalSelfInvestment));
-                setVal('active-deposit', window.formatValue(data.totalSelfInvestment));
-                setVal('total-earned', window.formatValue(data.totalLevelIncome.add(data.totalLevelROIIncome)));
-                setVal('withdrawable-display', window.formatValue(data.availableWithdrawable));
-                setVal('withdrawable-balance-main', window.formatValue(data.availableWithdrawable));
-                setVal('total-withdrawn', window.formatValue(data.totalWithdrawn));
-                setVal('projected-return', window.formatValue(data.pendingMaturity));
+                // Updating UI with formatted data
+                setVal('total-deposit-display', format(data.totalSelfInvestment));
+                setVal('active-deposit', format(data.totalSelfInvestment));
+                setVal('total-earned', format(data.totalLevelIncome.add(data.totalLevelROIIncome)));
+                setVal('withdrawable-display', format(data.availableWithdrawable));
+                setVal('withdrawable-balance-main', format(data.availableWithdrawable));
+                setVal('total-withdrawn', format(data.totalWithdrawn));
+                setVal('projected-return', format(data.pendingMaturity));
                 setVal('rank-display', data.rank || "MEMBER");
 
-                if(parseFloat(window.formatValue(data.totalSelfInvestment)) > 0) {
+                // Badge Logic for Active/Inactive
+                if(parseFloat(format(data.totalSelfInvestment)) > 0) {
                     const badge = document.getElementById('status-badge');
                     badge.innerHTML = "● Active Status";
                     badge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
                 }
 
-                if(data.username) {
-                    document.getElementById('refURL').value = `${window.location.origin}/register.html?ref=${data.username}`;
+                // Referral Link Logic
+                if(data.username && data.username !== "") {
+                    const baseUrl = window.location.origin;
+                    document.getElementById('refURL').value = `${baseUrl}/register.html?ref=${data.username}`;
                 }
-            } catch (err) { console.error("Update Error:", err); }
+            } catch (err) { 
+                console.error("Dashboard Load Error:", err); 
+            }
         }
 
-        // 3. Simple Countdown
+        // 3. Simple ROI Timer
         function startTimer() {
             setInterval(() => {
                 const now = new Date();
@@ -175,53 +215,71 @@
                 const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
                 const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
                 const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-                document.getElementById('next-timer').innerText = `${h}:${m}:${s}`;
+                const timerEl = document.getElementById('next-timer');
+                if(timerEl) timerEl.innerText = `${h}:${m}:${s}`;
             }, 1000);
         }
 
-        // 4. Connection Watcher
-        (function watch() {
-            if (window.contract && window.signer) {
-                loadDashboardData();
-                startTimer();
-            } else { setTimeout(watch, 1000); }
-        })();
-
+        // 4. Action Handlers
         async function handleInvest() {
             const amt = document.getElementById('deposit-amount').value;
-            if(!amt || amt < 10) return alert("Min 10 USDT!");
+            if(!amt || amt < 10) return alert("Minimum deposit is 10 USDT!");
+            
             const btn = document.getElementById('deposit-btn');
-            btn.disabled = true; btn.innerText = "Processing...";
+            const originalText = btn.innerHTML;
+            btn.disabled = true; 
+            btn.innerText = "Processing...";
+            
             try {
-                // Ensure this exists in web3-handler.js
-                await window.performInvestment(amt); 
+                // NOTE: This calls the function inside your web3-handler.js
+                // Make sure your web3-handler.js has handleInvest(amount) or similar
+                if (typeof window.handleInvest === 'function') {
+                    await window.handleInvest(amt);
+                } else {
+                    // Fallback direct call if not exported to window
+                    const tx = await window.contract.invest(ethers.utils.parseEther(amt));
+                    await tx.wait();
+                }
+                alert("Investment Successful!");
                 loadDashboardData();
-                alert("Success!");
-            } catch(e) { alert("Failed! Check balance/gas."); }
-            finally { 
-                btn.innerHTML = `DEPOSIT NOW <i data-lucide="arrow-up-right"></i>`;
-                btn.disabled = false; lucide.createIcons();
+            } catch(e) { 
+                console.error(e);
+                alert("Transaction Failed or Cancelled!"); 
+            } finally { 
+                btn.innerHTML = originalText;
+                btn.disabled = false; 
+                lucide.createIcons();
             }
         }
 
         async function handleClaim() {
             const btn = document.getElementById('withdraw-btn');
             btn.disabled = true;
+            btn.innerText = "Withdrawing...";
             try {
                 const tx = await window.contract.withdrawWorking();
                 await tx.wait();
+                alert("Withdrawal Successful!");
                 loadDashboardData();
-                alert("Success!");
-            } catch(e) { alert("Error!"); }
-            finally { btn.disabled = false; }
+            } catch(e) { 
+                alert("Withdrawal Failed!"); 
+            } finally { 
+                btn.innerHTML = `<i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now`;
+                btn.disabled = false; 
+                lucide.createIcons();
+            }
         }
 
         function copyLink() {
             const el = document.getElementById('refURL');
+            if(el.value.includes("Connect")) return alert("Please connect wallet first!");
             el.select();
             navigator.clipboard.writeText(el.value);
-            alert("Copied!");
+            alert("Referral link copied to clipboard!");
         }
+
+        // Start the watcher on page load
+        window.addEventListener('load', watchConnection);
     </script>
 </body>
 </html>
