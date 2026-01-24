@@ -171,37 +171,56 @@ async function loadReferralPageData() {
 // 3. Network table load karne ka function
 async function loadLevelData(level) {
     const tableBody = document.getElementById('team-table-body');
-    if (!window.contract || !window.signer || !tableBody) return;
+    if (!window.contract || !window.signer || !tableBody) {
+        console.error("Connection missing in loadLevelData");
+        return;
+    }
 
     tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-yellow-500 orbitron animate-pulse text-xs">SCANNING LEVEL ${level}...</td></tr>`;
 
     try {
         const address = await window.signer.getAddress();
+        console.log(`Fetching Level ${level} for ${address}`);
+        
         const res = await window.contract.getLevelTeamDetails(address, level);
+        console.log("Contract Response:", res); // Debugging ke liye zaroori hai
 
-        // Check if data exists in arrays
-        if (!res.wallets || res.wallets.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 italic">No users in Level ${level}</td></tr>`;
+        // Support both Object and Array return formats
+        const wallets = res.wallets || res[0];
+        const names = res.names || res[1];
+        const activeDeps = res.activeDeps || res[3]; // Check ABI index for activeDeps
+
+        if (!wallets || wallets.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 italic uppercase">No Data Found in Level ${level}</td></tr>`;
             return;
         }
 
         let html = '';
-        for(let i=0; i < res.wallets.length; i++) {
-            const pkgValue = format(res.activeDeps[i]);
+        for(let i=0; i < wallets.length; i++) {
+            // Hum 'format' function use kar rahe hain jo web3-handler mein hai
+            const pkgValue = (typeof format === "function") ? format(activeDeps[i]) : ethers.utils.formatUnits(activeDeps[i], 18);
+            const isAlive = parseFloat(pkgValue) > 0;
+
             html += `
                 <tr class="border-b border-white/5 hover:bg-white/5 transition-colors text-[11px]">
                     <td class="p-4">
                         <div class="flex flex-col">
-                            <span class="text-white font-bold">${res.names[i] || 'N/A'}</span>
-                            <span class="text-[9px] text-gray-500 font-mono">${res.wallets[i].substring(0,10)}...</span>
+                            <span class="text-white font-bold orbitron tracking-tighter">${names[i] || 'N/A'}</span>
+                            <span class="text-[9px] text-gray-500 font-mono">${wallets[i].substring(0,10)}...</span>
                         </div>
                     </td>
                     <td class="p-4 font-black text-white">${pkgValue} USDT</td>
-                    <td class="p-4 text-gray-400">Level ${level}</td>
+                    <td class="p-4 text-gray-400">LVL ${level}</td>
                     <td class="p-4">
-                        <span class="${parseFloat(pkgValue) > 0 ? 'text-green-400' : 'text-red-500'} font-bold">
-                            ${parseFloat(pkgValue) > 0 ? 'ACTIVE' : 'INACTIVE'}
-                        </span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${isAlive ? 'bg-green-400' : 'bg-red-400'} opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 ${isAlive ? 'bg-green-500' : 'bg-red-500'}"></span>
+                            </span>
+                            <span class="${isAlive ? 'text-green-400' : 'text-red-500'} font-bold">
+                                ${isAlive ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -210,7 +229,7 @@ async function loadLevelData(level) {
 
     } catch (err) {
         console.error("Table Error:", err);
-        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Sync Error</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Sync Error: ${err.message.substring(0, 30)}...</td></tr>`;
     }
 }
 
@@ -231,5 +250,6 @@ window.copyLink = function() {
 </script>
 </body>
 </html>
+
 
 
