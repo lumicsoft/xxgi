@@ -115,66 +115,81 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="components.js"></script> 
     <script src="web3-handler.js"></script>
-    <script>
-    lucide.createIcons();
+   <script>
+lucide.createIcons();
 
-    async function loadReferralPageData() {
-        // Retry logic agar contract load nahi hua
-        if (typeof window.contract === 'undefined' || !window.signer) {
-            setTimeout(loadReferralPageData, 1000);
+// 1. Yeh function check karega ki wallet connect hua ya nahi
+async function checkConnection() {
+    // Agar web3-handler.js ne contract setup kar diya hai
+    if (typeof window.contract !== 'undefined' && window.signer) {
+        console.log("Wallet Sync Successful!");
+        loadReferralPageData();
+    } else {
+        // Har 1 second mein dobara check karega jab tak connect na ho jaye
+        setTimeout(checkConnection, 1000);
+    }
+}
+
+// 2. Data load karne ka main function
+async function loadReferralPageData() {
+    try {
+        const address = await window.signer.getAddress();
+        
+        // Blockchain se data mangwana
+        const [userData, dash] = await Promise.all([
+            window.contract.users(address),
+            window.contract.getUserDashboard(address)
+        ]);
+
+        // Referral Link set karna
+        const baseUrl = window.location.origin + "/register.html";
+        if(userData.username && userData.username !== "") {
+            document.getElementById('refURL').value = `${baseUrl}?ref=${userData.username}`;
+        } else {
+            document.getElementById('refURL').value = "User not registered";
+        }
+
+        // Stats Update (IDs should match your HTML)
+        document.getElementById('direct-count').innerText = dash.totalDirectActive.toString();
+        document.getElementById('team-count').innerText = dash.totalTeamActive.toString();
+        document.getElementById('total-direct-count').innerText = dash.totalDirect.toString();
+        document.getElementById('total-team-count').innerText = dash.totalTeam.toString();
+        
+        // Inactive calculation
+        let inactive = parseInt(dash.totalTeam) - parseInt(dash.totalTeamActive);
+        document.getElementById('inactive-team-count').innerText = inactive > 0 ? inactive : "0";
+
+        // Income Update (USDT format)
+        document.getElementById('direct-earnings').innerText = ethers.utils.formatUnits(dash.totalLevelIncome, 18);
+        document.getElementById('level-earnings').innerText = ethers.utils.formatUnits(dash.totalLevelROIIncome, 18);
+
+        // Pehla level automatically load karein
+        loadLevelData(1);
+
+    } catch (err) { 
+        console.error("Referral Page Error:", err); 
+    }
+}
+
+// 3. Network table load karne ka function
+async function loadLevelData(level) {
+    const tableBody = document.getElementById('team-table-body');
+    if (!window.contract || !window.signer) return;
+
+    tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-yellow-500 orbitron animate-pulse text-xs">SCANNING LEVEL ${level}...</td></tr>`;
+
+    try {
+        const address = await window.signer.getAddress();
+        const members = await window.contract.getLevelTeamDetails(address, level);
+
+        if (!members || members.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 italic">No users in Level ${level}</td></tr>`;
             return;
         }
 
-        try {
-            const address = await window.signer.getAddress();
-            const [userData, dash] = await Promise.all([
-                window.contract.users(address),
-                window.contract.getUserDashboard(address)
-            ]);
-
-            // Stats Update
-            document.getElementById('direct-count').innerText = dash.totalDirectActive.toString();
-            document.getElementById('team-count').innerText = dash.totalTeamActive.toString();
-            
-            // New Team Stats Mapping
-            document.getElementById('total-direct-count').innerText = dash.totalDirect.toString();
-            document.getElementById('total-team-count').innerText = dash.totalTeam.toString();
-            
-            // Logic for Inactive (Total - Active)
-            let inactive = parseInt(dash.totalTeam) - parseInt(dash.totalTeamActive);
-            document.getElementById('inactive-team-count').innerText = inactive > 0 ? inactive : "0";
-
-            // Incomes
-            document.getElementById('direct-earnings').innerText = ethers.utils.formatUnits(dash.totalLevelIncome, 18);
-            document.getElementById('level-earnings').innerText = ethers.utils.formatUnits(dash.totalLevelROIIncome, 18);
-
-            // Referral Link
-            const baseUrl = window.location.origin + window.location.pathname.replace('referral.html', 'register.html');
-            document.getElementById('refURL').value = `${baseUrl}?ref=${userData.username}`;
-
-            // Load Default Level 1
-            loadLevelData(1);
-        } catch (err) { 
-            console.error("Referral Load Error:", err); 
-        }
-    }
-
-    async function loadLevelData(level) {
-        const tableBody = document.getElementById('team-table-body');
-        if (!window.contract) return;
-
-        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-yellow-500 orbitron animate-pulse text-xs">SCANNING LEVEL ${level}...</td></tr>`;
-
-        try {
-            const address = await window.signer.getAddress();
-            const members = await window.contract.getLevelTeamDetails(address, level);
-
-            if (!members || members.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 italic">No users in Level ${level}</td></tr>`;
-                return;
-            }
-
-            tableBody.innerHTML = members.map(m => `
+        tableBody.innerHTML = members.map(m => {
+            const pkg = ethers.utils.formatUnits(m.package, 18);
+            return `
                 <tr class="border-b border-white/5 hover:bg-white/5 transition-colors text-[11px]">
                     <td class="p-4">
                         <div class="flex flex-col">
@@ -182,30 +197,32 @@
                             <span class="text-[9px] text-gray-500 font-mono">${m.userAddress.substring(0,10)}...</span>
                         </div>
                     </td>
-                    <td class="p-4 font-black text-white">${ethers.utils.formatUnits(m.package, 18)} USDT</td>
+                    <td class="p-4 font-black text-white">${pkg} USDT</td>
                     <td class="p-4 text-gray-500">${m.joinTime > 0 ? new Date(m.joinTime * 1000).toLocaleDateString() : '---'}</td>
                     <td class="p-4">
-                        <span class="${parseFloat(ethers.utils.formatUnits(m.package, 18)) > 0 ? 'text-green-400' : 'text-red-500'} font-bold">
-                            ${parseFloat(ethers.utils.formatUnits(m.package, 18)) > 0 ? 'ACTIVE' : 'INACTIVE'}
+                        <span class="${parseFloat(pkg) > 0 ? 'text-green-400' : 'text-red-500'} font-bold">
+                            ${parseFloat(pkg) > 0 ? 'ACTIVE' : 'INACTIVE'}
                         </span>
                     </td>
                 </tr>
-            `).join('');
-        } catch (err) {
-            console.error("Table Load Error:", err);
-            tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Sync Error with Blockchain</td></tr>`;
-        }
+            `;
+        }).join('');
+    } catch (err) {
+        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Sync Error</td></tr>`;
     }
+}
 
-    window.copyLink = function() {
-        const copyText = document.getElementById("refURL");
-        if(copyText.value.includes("Connecting")) return alert("Please wait for wallet connection");
-        navigator.clipboard.writeText(copyText.value);
-        alert("Referral Link Copied!");
-    }
+// Page load hote hi checking shuru karein
+window.addEventListener('load', checkConnection);
 
-    // Initialize after some delay to let web3-handler load
-    window.addEventListener('load', () => setTimeout(loadReferralPageData, 1500));
-    </script>
+// Copy function
+window.copyLink = function() {
+    const copyText = document.getElementById("refURL");
+    if(copyText.value.includes("Connecting")) return alert("Please wait for wallet connection");
+    navigator.clipboard.writeText(copyText.value);
+    alert("Referral Link Copied!");
+}
+</script>
 </body>
 </html>
+
