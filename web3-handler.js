@@ -24,6 +24,7 @@ const CONTRACT_ABI = [
     "function withdrawWorking() external",
     "function withdrawMaturity(uint256 _idx) external nonReentrant",
     "function transferFund(string _toUsername, uint256 _amount) external",
+    "function getUserDeposits(address _user) external view returns (tuple(uint256 amount, uint256 startTime, uint256 lastAutoClosing, uint256 dailyRate, uint256 duration, bool isWithdrawn, bool active)[])",
     "function positions(address user, uint256 index) view returns (uint256 amount, uint256 startTime, uint256 lastAutoClosing, uint256 dailyRate, uint256 duration, bool isWithdrawn, bool active)",
     "function getLiveStat(address _user) view returns (uint256 totalAvailable, uint256 pendingMyROI)",
     "function getUserDashboard(address _user) view returns (tuple(uint256 totalLevelIncome, uint256 totalLevelROIIncome, uint256 totalDirectActive, uint256 totalDirectInactive, uint256 totalTeamActive, uint256 totalTeamInactive, uint256 totalIncome, uint256 totalROIIncome, uint256 totalWithdrawal, uint256 availableBalance, uint256 livePendingROI))",
@@ -537,6 +538,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
