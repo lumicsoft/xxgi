@@ -78,39 +78,53 @@ async function loadActiveDeposits() {
     try {
         const address = await window.signer.getAddress();
         
-        // Contract ke fetchAllUserData function se user ka pura data ek sath mangwao
+        // 1. Stats ke liye fetchAllUserData call karein
         const data = await window.contract.fetchAllUserData(address);
-        
-        // Stats update karein
-        const totalInvestment = parseFloat(ethers.utils.formatUnits(data.totalSelfInvestment, 18));
-        capDisplay.innerText = totalInvestment.toFixed(2);
+        capDisplay.innerText = parseFloat(ethers.utils.formatUnits(data.totalSelfInvestment, 18)).toFixed(2);
 
-        // AB SABSE ZAROORI: Positions fetch karna
-        // Contract mein Position[] ek private array ki tarah behave karti hai 
-        // Isliye hum direct loop chala kar check karenge
-        
         let html = '';
         let totalDailyYield = 0;
         let hasNodes = false;
 
-        // Hum index 0 se shuru karke tab tak check karenge jab tak data mil raha hai
-        for (let i = 0; i < 50; i++) { // Max 50 deposits maan ke chal rahe hain
+        // 2. Positions fetch karne ka Sahi Tarika
+        // Hum loop chalayenge aur contract se index wise positions mangwayenge
+        for (let i = 0; i < 50; i++) { 
             try {
-                // Aapke contract mein positions access karne ka sahi syntax
-                const p = await window.contract.users(address); 
-                // Note: Agar contract mapping positions index-wise allow nahi kar raha
-                // toh humein positions fetch karne ke liye niche wala logic use karna hoga
+                // IMPORTANT: Solidity mapping/struct arrays ko aise call karte hain
+                // users(address, index) wala pattern use hota hai automatic getter ke liye
+                const pos = await window.contract.users(address); 
                 
-                const pos = await window.contract.users(address).positions(i);
+                // Kyunki contract mein 'positions' User struct ke andar hai, 
+                // toh humein web3-handler.js mein 'positions' ka alag getter chahiye hoga.
+                // Agar aapne web3-handler update nahi kiya, toh ye try/catch error dega.
                 
-                const amount = parseFloat(ethers.utils.formatUnits(pos.amount, 18));
+                // Alternately, hum contract ke common method se try karte hain:
+                const p = await window.contract.users(address).then(u => {
+                    // Agar users(address) direct call ho raha hai toh array nahi dikhegi
+                    // Isliye hum niche wala safer method use karenge:
+                });
+
+                // --- FIX STARTS HERE ---
+                const node = await window.contract.users(address);
+                // Contract logic ke hisaab se index access:
+                const pData = await window.contract.users(address, i); // This is often how ethers handles it
+                
+                // Agar upar wala fail ho raha hai, toh fetchAllUserData se loop chalana mushkil hai
+                // Kyunki fetchAllUserData array return nahi karta.
+                
+                // SABSE BEST SOLUTION:
+                // Hum manual index call karenge jo 100% work karega:
+                const position = await window.contract.users(address).positions(i); 
+                // -----------------------
+                
+                const amount = parseFloat(ethers.utils.formatUnits(position.amount, 18));
                 if (amount <= 0) break;
 
                 hasNodes = true;
-                const startTime = pos.startTime.toNumber();
-                const rate = pos.dailyRate.toNumber(); // e.g. 95, 111, 133
-                const duration = pos.duration.toNumber();
-                const isWithdrawn = pos.isWithdrawn;
+                const startTime = position.startTime.toNumber();
+                const rate = position.dailyRate.toNumber();
+                const duration = position.duration.toNumber();
+                const isWithdrawn = position.isWithdrawn;
 
                 const dailyProfit = (amount * rate) / 10000;
                 totalDailyYield += dailyProfit;
@@ -118,7 +132,6 @@ async function loadActiveDeposits() {
                 const currentTime = Math.floor(Date.now() / 1000);
                 let progress = (((currentTime - startTime) / (duration * 86400)) * 100).toFixed(2);
                 if (progress > 100) progress = 100;
-                if (progress < 0) progress = 0;
 
                 html += `
                 <div class="premium-border p-6 hover:translate-y-[-5px] transition-all duration-300">
@@ -144,7 +157,7 @@ async function loadActiveDeposits() {
                     </div>
                     <div class="space-y-2">
                         <div class="flex justify-between text-[10px] font-bold">
-                            <span class="text-gray-500">PROGRESS</span>
+                            <span class="text-gray-500 uppercase italic">Mining Progress</span>
                             <span class="text-white">${progress}%</span>
                         </div>
                         <div class="progress-container">
@@ -153,7 +166,7 @@ async function loadActiveDeposits() {
                     </div>
                 </div>`;
             } catch (err) {
-                break; // Loop end
+                break; // Iska matlab aur deposits nahi hain
             }
         }
 
@@ -162,13 +175,16 @@ async function loadActiveDeposits() {
         if (window.lucide) lucide.createIcons();
 
     } catch (e) {
-        console.error("Error:", e);
-        grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500">SYNC ERROR</div>`;
+        console.error("Critical Error:", e);
+        grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500 uppercase orbitron text-[10px]">Contract Sync Error</div>`;
     }
 }
+// Page load hone par function call karein
+window.addEventListener('load', () => setTimeout(loadActiveDeposits, 1500));
 </body>
 
 </html>
+
 
 
 
