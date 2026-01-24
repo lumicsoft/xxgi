@@ -27,16 +27,16 @@
         <div class="flex justify-between items-center mb-10">
             <div>
                 <h1 class="text-3xl font-black orbitron italic uppercase tracking-tighter">Active <span class="text-yellow-500">Deposits</span></h1>
-                <p id="wallet-status" class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Wallet Connection Pending</p>
+                <p id="sync-status" class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">Syncing with Wallet...</p>
             </div>
-            <button onclick="connectWallet()" id="connect-btn" class="bg-white/5 border border-white/10 p-2 rounded-lg hover:bg-white/10 transition-all">
-                <i data-lucide="refresh-cw" id="refresh-icon" class="w-5 h-5 text-yellow-500"></i>
+            <button onclick="loadActiveDeposits()" class="bg-white/5 border border-white/10 p-2 rounded-lg hover:bg-white/10 transition-all">
+                <i data-lucide="refresh-cw" class="w-5 h-5 text-yellow-500"></i>
             </button>
         </div>
 
         <div class="grid grid-cols-2 gap-6 mb-10">
             <div class="premium-border p-6 text-center">
-                <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Available Balance</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Total Available Balance</p>
                 <h3 class="text-2xl font-black orbitron text-white flex items-center justify-center">
                     <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon">
                     <span id="total-active-capital">0.00</span>
@@ -53,7 +53,10 @@
 
         <div id="deposits-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
             <div class="col-span-full text-center py-20">
-                <p class="orbitron text-xs text-gray-500 uppercase tracking-widest">Scanning Blockchain...</p>
+                <div class="inline-block animate-spin text-yellow-500 mb-4">
+                    <i data-lucide="refresh-cw" class="w-10 h-10"></i>
+                </div>
+                <p class="orbitron text-xs text-gray-500 uppercase tracking-widest">Waiting for Web3 Handler...</p>
             </div>
         </div>
     </main>
@@ -62,53 +65,22 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="components.js"></script>
-    
+    <script src="web3-handler.js"></script>
+
     <script>
-        // --- CONFIG ---
-        const CONTRACT_ADDRESS = "0x1E526fb7ae52b451e4e86e376B4531Cae9b192D6"; 
-        const ABI = [
-            "function users(address) view returns (string username, address sponsor, uint256 directCount, uint256 workingBalance, uint256 totalWithdrawn, uint256 statLevelIncome, uint256 statLevelROIIncome)",
-            "function positions(address, uint256) view returns (uint256 amount, uint256 startTime, uint256 lastAutoClosing, uint256 dailyRate, uint256 duration, bool isWithdrawn, bool active)",
-            "function getUserDashboard(address) view returns (tuple(uint256 totalLevelIncome, uint256 totalLevelROIIncome, uint256 totalDirectActive, uint256 totalDirectInactive, uint256 totalTeamActive, uint256 totalTeamInactive, uint256 totalIncome, uint256 totalROIIncome, uint256 totalWithdrawal, uint256 availableBalance, uint256 livePendingROI))",
-            "function withdrawMaturity(uint256) external"
-        ];
-
-        let provider, signer, contract;
-
-        // Auto-connect if already authorized
-        async function init() {
-            if (window.ethereum) {
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                const accounts = await provider.listAccounts();
-                if (accounts.length > 0) {
-                    connectWallet();
-                } else {
-                    document.getElementById('wallet-status').innerText = "Please Connect Wallet";
-                }
-            }
-        }
-
-        async function connectWallet() {
-            try {
-                if (!window.ethereum) return alert("Install MetaMask");
-                
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
-                const address = await signer.getAddress();
-                
-                contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-                
-                // Update Global Window Objects for other scripts
-                window.signer = signer;
-                window.contract = contract;
-
-                document.getElementById('wallet-status').innerText = "CONNECTED: " + address.substring(0,6) + "...";
-                document.getElementById('wallet-status').style.color = "#22c55e";
-                
+        // --- YE HAI MAIN FIX ---
+        // Hum check karte rahenge jab tak web3-handler window.contract ko setup nahi kar deta
+        async function waitForWeb3() {
+            const statusText = document.getElementById('sync-status');
+            
+            if (window.contract && window.signer) {
+                console.log("Web3 Handler Connected!");
+                statusText.innerText = "BLOCKCHAIN CONNECTED";
+                statusText.classList.replace('text-gray-500', 'text-green-500');
                 loadActiveDeposits();
-            } catch (err) {
-                console.log(err);
+            } else {
+                console.log("Waiting for web3-handler.js...");
+                setTimeout(waitForWeb3, 1000); // Har 1 second mein check karega
             }
         }
 
@@ -117,59 +89,61 @@
             const capDisplay = document.getElementById('total-active-capital');
             const profitDisplay = document.getElementById('total-daily-profit');
             
-            if (!contract) return;
-
-            grid.innerHTML = `<div class="col-span-full text-center py-20 animate-pulse orbitron text-xs text-yellow-500">FETCHING NODES...</div>`;
+            if (!window.contract || !window.signer) return;
 
             try {
-                const address = await signer.getAddress();
-                const dash = await contract.getUserDashboard(address);
+                const address = await window.signer.getAddress();
                 
-                capDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.availableBalance, 18)).toFixed(2);
-                profitDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.livePendingROI, 18)).toFixed(2);
+                // Dashboard Data
+                const dash = await window.contract.getUserDashboard(address);
+                if(capDisplay) capDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.availableBalance, 18)).toFixed(2);
+                if(profitDisplay) profitDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.livePendingROI, 18)).toFixed(2);
 
                 let html = '';
                 let hasNodes = false;
 
-                for (let i = 0; i < 50; i++) {
+                for (let i = 0; i < 50; i++) { 
                     try {
-                        const p = await contract.positions(address, i);
-                        if (p.amount.eq(0)) break;
+                        // positions check
+                        const p = await window.contract.positions(address, i);
+                        
+                        if (p.amount.eq(0)) break; 
 
                         hasNodes = true;
                         const amount = parseFloat(ethers.utils.formatUnits(p.amount, 18));
                         const startTime = p.startTime.toNumber();
+                        const rate = p.dailyRate.toNumber(); 
                         const duration = p.duration.toNumber();
-                        const rate = p.dailyRate.toNumber();
                         const isWithdrawn = p.isWithdrawn;
                         const isActive = p.active;
 
+                        const nodeDailyYield = (amount * rate) / 10000;
                         const currentTime = Math.floor(Date.now() / 1000);
                         let progress = (((currentTime - startTime) / (duration * 86400)) * 100).toFixed(2);
                         if (progress > 100) progress = 100;
                         if (progress < 0) progress = 0;
 
                         html += `
-                        <div class="premium-border p-6 transition-all duration-300">
+                        <div class="premium-border p-6 hover:border-yellow-500/30 transition-all duration-300">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <p class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest">MINING NODE #0${i + 1}</p>
+                                    <p class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest">NODE #${i + 1}</p>
                                     <h3 class="text-xl font-black orbitron text-white flex items-center">
                                         <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon-sm">
                                         ${amount.toFixed(2)}
                                     </h3>
                                 </div>
                                 <span class="${isActive && !isWithdrawn ? 'status-badge' : 'bg-white/10 text-gray-500 px-3 py-1 text-[8px] rounded-full'}">
-                                    ${isWithdrawn ? 'WITHDRAWN' : (isActive ? 'ACTIVE' : 'MATURED')}
+                                    ${isWithdrawn ? 'WITHDRAWN' : (isActive ? 'MINING' : 'MATURED')}
                                 </span>
                             </div>
                             <div class="grid grid-cols-2 gap-3 mb-6">
                                 <div class="bg-white/5 border border-white/10 rounded-xl p-3">
-                                    <p class="text-[8px] text-gray-500 uppercase font-black mb-1">Daily ROI</p>
-                                    <p class="text-xs font-bold text-green-400">+${((amount * rate)/10000).toFixed(2)}</p>
+                                    <p class="text-[8px] text-gray-400 uppercase font-black mb-1">Daily Profit</p>
+                                    <p class="text-xs font-bold text-green-400">+${nodeDailyYield.toFixed(2)}</p>
                                 </div>
                                 <div class="bg-white/5 border border-white/10 rounded-xl p-3">
-                                    <p class="text-[8px] text-gray-500 uppercase font-black mb-1">ROI Rate</p>
+                                    <p class="text-[8px] text-gray-400 uppercase font-black mb-1">ROI Rate</p>
                                     <p class="text-xs font-bold text-white">${(rate/100).toFixed(2)}%</p>
                                 </div>
                             </div>
@@ -180,35 +154,36 @@
                                 </div>
                                 <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
                             </div>
-                            ${progress >= 100 && !isWithdrawn ? 
-                                `<button onclick="withdrawMaturityNode(${i})" class="w-full py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400 shadow-lg shadow-yellow-500/20">CLAIM PRINCIPAL</button>` 
-                                : `<div class="text-center py-2 bg-white/5 rounded-lg border border-white/5"><p class="text-[8px] text-gray-500 font-bold orbitron uppercase tracking-widest">Locked: ${duration} Days</p></div>`
-                            }
+                            ${progress >= 100 && !isWithdrawn ? `
+                                <button onclick="withdrawMaturityNode(${i})" class="w-full py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400">CLAIM PRINCIPAL</button>
+                            ` : `<div class="text-center py-2 bg-white/5 rounded-lg border border-white/5"><p class="text-[8px] text-gray-400 font-bold orbitron uppercase tracking-widest italic">Mining...</p></div>`}
                         </div>`;
-                    } catch (e) { break; }
+                    } catch (err) { break; }
                 }
 
-                grid.innerHTML = hasNodes ? html : `<div class="col-span-full text-center py-20 border-2 border-dashed border-white/5 rounded-3xl"><p class="orbitron text-xs text-gray-600 uppercase tracking-widest">No Deposits Found</p></div>`;
+                grid.innerHTML = hasNodes ? html : `<div class="col-span-full text-center py-20 border-2 border-dashed border-white/5 rounded-3xl"><p class="orbitron text-xs text-gray-600 uppercase tracking-widest">No Active Mining Nodes Found</p></div>`;
                 if (window.lucide) lucide.createIcons();
+
             } catch (err) {
-                grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500">ERROR LOADING DATA</div>`;
+                console.error(err);
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500 orbitron text-xs">BLOCKCHAIN SYNC ERROR</div>`;
             }
         }
 
         async function withdrawMaturityNode(idx) {
             try {
-                const tx = await contract.withdrawMaturity(idx);
+                if(!window.contract) return;
+                const tx = await window.contract.withdrawMaturity(idx);
                 await tx.wait();
                 alert("Withdrawal Successful!");
                 loadActiveDeposits();
             } catch (err) {
-                alert("Withdrawal Failed!");
+                alert("Withdraw Failed!");
             }
         }
 
-        // Initialize components and web3
-        window.addEventListener('load', init);
+        // Page load hone par wait shuru karein
+        window.addEventListener('load', waitForWeb3);
     </script>
 </body>
 </html>
-
