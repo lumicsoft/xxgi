@@ -49,13 +49,18 @@ async function ensureConnection() {
         signer = provider.getSigner();
         contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
         usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
+
+        // --- YEH DO LINES ZAROORI HAIN ---
+        window.signer = signer;
+        window.contract = contract;
+        window.provider = provider;
+
         return true;
     } catch (e) {
         console.error("Connection failed", e);
         return false;
     }
 }
-
 const calculateGlobalROI = (amount) => {
     const amt = parseFloat(amount);
     if (amt >= 5.665) return 6.00;
@@ -77,6 +82,7 @@ function checkReferralURL() {
     }
 }
 
+
 // --- INITIALIZATION ---
 async function init() {
     if (typeof checkReferralURL === "function") checkReferralURL();
@@ -86,10 +92,10 @@ async function init() {
             provider = new ethers.providers.Web3Provider(window.ethereum);
             const accounts = await provider.listAccounts();
             
-            // Re-sync Global Variables
-            signer = provider.getSigner();
-            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
+            // Re-sync Global Variables - Humne window. lagaya hai taaki referral page ise dekh sake
+            window.signer = provider.getSigner(); 
+            window.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, window.signer);
+            window.usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, window.signer);
 
             if (accounts.length > 0) {
                 if (localStorage.getItem('manualLogout') !== 'true') {
@@ -529,6 +535,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
