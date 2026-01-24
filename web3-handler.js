@@ -22,7 +22,6 @@ const CONTRACT_ABI = [
     "function register(string _username, string _sponsorUsername) external",
     "function invest(uint256 _amount) external",
     "function withdrawWorking() external",
-    "function withdrawMaturity(uint256 _idx) external",
     "function withdrawMaturity(uint256 _idx) external nonReentrant",
     "function transferFund(string _toUsername, uint256 _amount) external",
     "function getLiveStat(address _user) view returns (uint256 totalAvailable, uint256 pendingMyROI)",
@@ -537,6 +536,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
