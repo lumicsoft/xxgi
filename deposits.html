@@ -68,19 +68,14 @@
     <script src="web3-handler.js"></script>
 
     <script>
-        // --- YE HAI MAIN FIX ---
-        // Hum check karte rahenge jab tak web3-handler window.contract ko setup nahi kar deta
         async function waitForWeb3() {
             const statusText = document.getElementById('sync-status');
-            
             if (window.contract && window.signer) {
-                console.log("Web3 Handler Connected!");
                 statusText.innerText = "BLOCKCHAIN CONNECTED";
                 statusText.classList.replace('text-gray-500', 'text-green-500');
                 loadActiveDeposits();
             } else {
-                console.log("Waiting for web3-handler.js...");
-                setTimeout(waitForWeb3, 1000); // Har 1 second mein check karega
+                setTimeout(waitForWeb3, 1000);
             }
         }
 
@@ -94,21 +89,19 @@
             try {
                 const address = await window.signer.getAddress();
                 
-                // Dashboard Data
+                // 1. Fetch Dashboard Stats
                 const dash = await window.contract.getUserDashboard(address);
                 if(capDisplay) capDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.availableBalance, 18)).toFixed(2);
                 if(profitDisplay) profitDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.livePendingROI, 18)).toFixed(2);
 
+                // 2. Fetch ALL Deposits in ONE Call (New Function)
+                const deposits = await window.contract.getUserDeposits(address);
+
                 let html = '';
                 let hasNodes = false;
 
-                for (let i = 0; i < 50; i++) { 
-                    try {
-                        // positions check
-                        const p = await window.contract.positions(address, i);
-                        
-                        if (p.amount.eq(0)) break; 
-
+                deposits.forEach((p, i) => {
+                    if (p.amount.gt(0)) {
                         hasNodes = true;
                         const amount = parseFloat(ethers.utils.formatUnits(p.amount, 18));
                         const startTime = p.startTime.toNumber();
@@ -119,7 +112,9 @@
 
                         const nodeDailyYield = (amount * rate) / 10000;
                         const currentTime = Math.floor(Date.now() / 1000);
-                        let progress = (((currentTime - startTime) / (duration * 86400)) * 100).toFixed(2);
+                        
+                        // Progress calculation logic
+                        let progress = (((currentTime - startTime) / (duration * 86400)) * 100);
                         if (progress > 100) progress = 100;
                         if (progress < 0) progress = 0;
 
@@ -150,22 +145,22 @@
                             <div class="space-y-2 mb-4">
                                 <div class="flex justify-between text-[10px] font-bold orbitron">
                                     <span class="text-gray-400">PROGRESS</span>
-                                    <span class="text-white">${progress}%</span>
+                                    <span class="text-white">${progress.toFixed(2)}%</span>
                                 </div>
                                 <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
                             </div>
                             ${progress >= 100 && !isWithdrawn ? `
                                 <button onclick="withdrawMaturityNode(${i})" class="w-full py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400">CLAIM PRINCIPAL</button>
-                            ` : `<div class="text-center py-2 bg-white/5 rounded-lg border border-white/5"><p class="text-[8px] text-gray-400 font-bold orbitron uppercase tracking-widest italic">Mining...</p></div>`}
+                            ` : `<div class="text-center py-2 bg-white/5 rounded-lg border border-white/5"><p class="text-[8px] text-gray-400 font-bold orbitron uppercase tracking-widest italic">${isWithdrawn ? 'Completed' : 'Mining...'}</p></div>`}
                         </div>`;
-                    } catch (err) { break; }
-                }
+                    }
+                });
 
                 grid.innerHTML = hasNodes ? html : `<div class="col-span-full text-center py-20 border-2 border-dashed border-white/5 rounded-3xl"><p class="orbitron text-xs text-gray-600 uppercase tracking-widest">No Active Mining Nodes Found</p></div>`;
                 if (window.lucide) lucide.createIcons();
 
             } catch (err) {
-                console.error(err);
+                console.error("Fetch Error:", err);
                 grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500 orbitron text-xs">BLOCKCHAIN SYNC ERROR</div>`;
             }
         }
@@ -178,11 +173,11 @@
                 alert("Withdrawal Successful!");
                 loadActiveDeposits();
             } catch (err) {
-                alert("Withdraw Failed!");
+                console.error(err);
+                alert("Withdraw Failed! Check if cycle is actually complete.");
             }
         }
 
-        // Page load hone par wait shuru karein
         window.addEventListener('load', waitForWeb3);
     </script>
 </body>
