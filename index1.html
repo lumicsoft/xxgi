@@ -17,6 +17,9 @@
         .luxury-table { width: 100%; border-collapse: collapse; }
         .luxury-table th { padding: 15px; text-align: left; border-bottom: 2px solid rgba(234, 179, 8, 0.2); color: #eab308; font-size: 12px; font-family: 'Orbitron'; }
         .luxury-table td { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; font-weight: 600; }
+        .premium-border { border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); }
+        .gold-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(234, 179, 8, 0.3); }
+        .gold-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px #eab308; }
     </style>
 </head>
 <body class="bg-[#050505] text-white"> 
@@ -68,7 +71,7 @@
             <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-3">Your Referral Link</p>
             <div class="flex items-center gap-3 bg-black/40 p-2 pl-4 rounded-xl border border-white/10">
                 <input id="refURL" type="text" readonly value="Connect wallet..." class="bg-transparent border-none outline-none w-full text-xs text-gray-300 font-mono">
-                <button onclick="copyLink()" class="gold-btn !py-2 px-6">COPY</button>
+                <button onclick="copyLink()" class="gold-btn !py-2 px-6 bg-yellow-600 text-black font-bold rounded-lg">COPY</button>
             </div>
         </div>
 
@@ -79,7 +82,7 @@
                     <input type="number" id="deposit-amount" placeholder="Min 10 USDT" class="deposit-input-box font-black orbitron text-lg">
                 </div>
                 <div class="w-full md:w-1/2 md:pt-6">
-                    <button onclick="handleInvest()" id="deposit-btn" class="gold-btn w-full !py-4 orbitron font-black tracking-widest bg-gradient-to-r from-yellow-500 to-yellow-700">
+                    <button onclick="handleInvest()" id="deposit-btn" class="gold-btn w-full !py-4 orbitron font-black tracking-widest bg-gradient-to-r from-yellow-500 to-yellow-700 text-black rounded-xl">
                         DEPOSIT NOW <i data-lucide="arrow-up-right" class="w-4 h-4 inline-block ml-1"></i>
                     </button>
                 </div>
@@ -92,7 +95,7 @@
             <h3 class="text-4xl font-black orbitron text-white mb-8">
                 <span class="text-yellow-500 mr-2">$</span><span id="withdrawable-balance-main">0.00</span>
             </h3>
-            <button onclick="handleClaim()" id="withdraw-btn" class="gold-btn withdraw-btn px-10 max-w-sm mx-auto w-full">
+            <button onclick="handleClaim()" id="withdraw-btn" class="gold-btn withdraw-btn px-10 py-4 max-w-sm mx-auto w-full rounded-xl font-bold uppercase">
                 <i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now
             </button>
         </div>
@@ -124,7 +127,7 @@
                     <thead>
                         <tr><th>Investment Range (USDT)</th><th>Daily Return</th></tr>
                     </thead>
-                    <tbody id="cp-chart-body">
+                    <tbody>
                         <tr><td>10 - 500 USDT</td><td class="text-green-400 font-bold">5.00%</td></tr>
                         <tr><td>501 - 2000 USDT</td><td class="text-green-400 font-bold">5.25%</td></tr>
                         <tr class="bg-yellow-500/5"><td>2001 - 5000 USDT 🔥</td><td class="text-yellow-500 font-bold">5.50%</td></tr>
@@ -137,27 +140,38 @@
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <script src="components.js"></script>
     <script src="web3-handler.js"></script>
 
     <script>
         lucide.createIcons();
 
-        // 1. Connection Watcher: Dashboard update karne ke liye
+        // Safety: Helper to format ether values
+        const format = (val) => {
+            if(!val) return "0.00";
+            try {
+                return parseFloat(ethers.utils.formatEther(val)).toFixed(2);
+            } catch(e) {
+                return "0.00";
+            }
+        };
+
+        // 1. Connection Watcher
         async function watchConnection() {
             if (window.contract && window.signer) {
-                console.log("Dashboard Linked!");
+                console.log("Dashboard Connected Successfully!");
                 loadDashboardData();
                 startTimer();
             } else {
+                // Keep checking until wallet is ready via web3-handler.js
                 setTimeout(watchConnection, 1000);
             }
         }
 
-        // 2. Dashboard Data Loader
+        // 2. Data Loader (Uses your Smart Contract functions)
         async function loadDashboardData() {
             try {
                 const address = await window.signer.getAddress();
+                // Calling the big function from your contract
                 const data = await window.contract.fetchAllUserData(address);
 
                 const setVal = (id, val) => { 
@@ -165,7 +179,7 @@
                     if(el) el.innerText = val; 
                 };
 
-                // Formatted UI update
+                // Updating UI with formatted data
                 setVal('total-deposit-display', format(data.totalSelfInvestment));
                 setVal('active-deposit', format(data.totalSelfInvestment));
                 setVal('total-earned', format(data.totalLevelIncome.add(data.totalLevelROIIncome)));
@@ -175,22 +189,24 @@
                 setVal('projected-return', format(data.pendingMaturity));
                 setVal('rank-display', data.rank || "MEMBER");
 
-                // Badge Logic
+                // Badge Logic for Active/Inactive
                 if(parseFloat(format(data.totalSelfInvestment)) > 0) {
                     const badge = document.getElementById('status-badge');
                     badge.innerHTML = "● Active Status";
                     badge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
                 }
 
-                // Referral Link
-                if(data.username) {
-                    const baseUrl = window.location.origin + "/register.html";
-                    document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
+                // Referral Link Logic
+                if(data.username && data.username !== "") {
+                    const baseUrl = window.location.origin;
+                    document.getElementById('refURL').value = `${baseUrl}/register.html?ref=${data.username}`;
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error("Dashboard Load Error:", err); 
+            }
         }
 
-        // 3. Simple Countdown
+        // 3. Simple ROI Timer
         function startTimer() {
             setInterval(() => {
                 const now = new Date();
@@ -199,48 +215,70 @@
                 const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
                 const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
                 const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-                document.getElementById('next-timer').innerText = `${h}:${m}:${s}`;
+                const timerEl = document.getElementById('next-timer');
+                if(timerEl) timerEl.innerText = `${h}:${m}:${s}`;
             }, 1000);
         }
 
-        // 4. Action Functions (Jo handler se connect hain)
+        // 4. Action Handlers
         async function handleInvest() {
             const amt = document.getElementById('deposit-amount').value;
-            if(!amt || amt < 10) return alert("Min 10 USDT!");
+            if(!amt || amt < 10) return alert("Minimum deposit is 10 USDT!");
             
             const btn = document.getElementById('deposit-btn');
-            btn.disabled = true; btn.innerText = "Processing...";
+            const originalText = btn.innerHTML;
+            btn.disabled = true; 
+            btn.innerText = "Processing...";
             
             try {
-                // Ye function aapke web3-handler.js mein hona chahiye
-                await performInvestment(amt); 
+                // NOTE: This calls the function inside your web3-handler.js
+                // Make sure your web3-handler.js has handleInvest(amount) or similar
+                if (typeof window.handleInvest === 'function') {
+                    await window.handleInvest(amt);
+                } else {
+                    // Fallback direct call if not exported to window
+                    const tx = await window.contract.invest(ethers.utils.parseEther(amt));
+                    await tx.wait();
+                }
+                alert("Investment Successful!");
                 loadDashboardData();
-            } catch(e) { alert("Failed!"); }
-            finally { 
-                btn.innerHTML = `DEPOSIT NOW <i data-lucide="arrow-up-right"></i>`; 
-                btn.disabled = false; lucide.createIcons();
+            } catch(e) { 
+                console.error(e);
+                alert("Transaction Failed or Cancelled!"); 
+            } finally { 
+                btn.innerHTML = originalText;
+                btn.disabled = false; 
+                lucide.createIcons();
             }
         }
 
         async function handleClaim() {
             const btn = document.getElementById('withdraw-btn');
             btn.disabled = true;
+            btn.innerText = "Withdrawing...";
             try {
                 const tx = await window.contract.withdrawWorking();
                 await tx.wait();
-                alert("Success!");
+                alert("Withdrawal Successful!");
                 loadDashboardData();
-            } catch(e) { alert("Error!"); }
-            finally { btn.disabled = false; }
+            } catch(e) { 
+                alert("Withdrawal Failed!"); 
+            } finally { 
+                btn.innerHTML = `<i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now`;
+                btn.disabled = false; 
+                lucide.createIcons();
+            }
         }
 
         function copyLink() {
             const el = document.getElementById('refURL');
+            if(el.value.includes("Connect")) return alert("Please connect wallet first!");
             el.select();
             navigator.clipboard.writeText(el.value);
-            alert("Copied!");
+            alert("Referral link copied to clipboard!");
         }
 
+        // Start the watcher on page load
         window.addEventListener('load', watchConnection);
     </script>
 </body>
