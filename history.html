@@ -103,89 +103,107 @@
         return filtered.reverse();
     };
 
-    async function showHistory(type) {
-        const container = document.getElementById('history-container');
-        const buttons = document.querySelectorAll('.filter-btn');
-        
-        buttons.forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.getElementById('btn-' + type);
-        if(activeBtn) activeBtn.classList.add('active');
+   async function showHistory(type) {
+    const container = document.getElementById('history-container');
+    const buttons = document.querySelectorAll('.filter-btn');
+    
+    // UI Update: Active Button state
+    buttons.forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById('btn-' + type);
+    if(activeBtn) activeBtn.classList.add('active');
 
-        container.innerHTML = `<div class="text-center py-20"><div class="inline-block animate-spin mb-4 text-yellow-500"><i data-lucide="refresh-cw" class="w-8 h-8"></i></div></div>`;
-        lucide.createIcons();
+    // Loading State
+    container.innerHTML = `
+        <div class="text-center py-20">
+            <div class="inline-block animate-spin mb-4 text-yellow-500">
+                <i data-lucide="refresh-cw" class="w-8 h-8"></i>
+            </div>
+            <p class="text-[10px] font-bold text-gray-500 orbitron uppercase">Fetching Data...</p>
+        </div>
+    `;
+    if(window.lucide) lucide.createIcons();
 
-        try {
-            const address = await window.signer.getAddress();
-            let html = '';
+    try {
+        const address = await window.signer.getAddress();
+        let html = '';
 
-            if (type === 'deposit') {
-                // Fetch LIVE positions for Deposits to show Maturity
-                const deposits = await window.contract.getUserDeposits(address);
-                let count = 0;
+        if (type === 'deposit') {
+            let count = 0;
+            // Loop through positions: Kyunki mapping index-based hoti hai
+            for (let i = 0; i < 100; i++) {
+                try {
+                    // Sirf positions mapping use kar rahe hain
+                    const p = await window.contract.positions(address, i);
+                    
+                    // Agar amount 0 hai, matlab aage koi deposit nahi hai, loop tod do
+                    if (p.amount.eq(0)) break; 
 
-                deposits.forEach((p, i) => {
-                    if (p.amount.gt(0)) {
-                        count++;
-                        const amt = formatValue(p.amount);
-                        const startTS = p.startTime.toNumber();
-                        const duration = p.duration.toNumber();
-                        const isWithdrawn = p.isWithdrawn;
-                        
-                        const stakeDate = new Date(startTS * 1000).toLocaleDateString('en-GB');
-                        const maturityTS = startTS + (duration * 86400);
-                        const maturityDate = new Date(maturityTS * 1000).toLocaleDateString('en-GB');
-                        const isMatured = (Math.floor(Date.now() / 1000)) >= maturityTS;
+                    count++;
+                    const amt = formatValue(p.amount);
+                    const startTS = p.startTime.toNumber();
+                    const duration = p.duration.toNumber();
+                    const isWithdrawn = p.isWithdrawn;
+                    
+                    const stakeDate = new Date(startTS * 1000).toLocaleDateString('en-GB');
+                    const maturityTS = startTS + (duration * 86400);
+                    const maturityDate = new Date(maturityTS * 1000).toLocaleDateString('en-GB');
+                    const isMatured = (Math.floor(Date.now() / 1000)) >= maturityTS;
 
-                        html += `
-                        <div class="history-card border-l-4 ${isWithdrawn ? 'border-gray-700' : (isMatured ? 'border-green-500' : 'border-yellow-500')}">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-[10px] font-black text-yellow-500 uppercase tracking-tighter italic">STAKE NODE #${i+1}</p>
-                                    <p class="text-[10px] font-bold text-gray-500 uppercase mt-1">Date: ${stakeDate}</p>
-                                    <p class="text-[10px] font-bold text-white uppercase mt-1">Matures: <span class="text-yellow-500 underline">${maturityDate}</span></p>
-                                </div>
-                                <div class="text-right">
-                                    <h3 class="text-lg font-black orbitron text-white flex items-center justify-end">
-                                        <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon-sm">
-                                        ${amt}
-                                    </h3>
-                                    <p class="text-[8px] font-bold uppercase mt-1 ${isWithdrawn ? 'text-gray-600' : (isMatured ? 'text-green-400' : 'text-blue-400')}">
-                                        ${isWithdrawn ? 'COMPLETED' : (isMatured ? 'READY TO CLAIM' : 'MINING...')}
-                                    </p>
-                                </div>
+                    html += `
+                    <div class="history-card border-l-4 ${isWithdrawn ? 'border-gray-700' : (isMatured ? 'border-green-500' : 'border-yellow-500')} mb-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-[10px] font-black text-yellow-500 uppercase italic">DEPOSIT #${i+1}</p>
+                                <p class="text-[10px] font-bold text-gray-500 mt-1">Staked: ${stakeDate}</p>
+                                <p class="text-[10px] font-bold text-white mt-1">Maturity: <span class="text-yellow-500">${maturityDate}</span></p>
                             </div>
-                            ${!isWithdrawn && isMatured ? `
-                                <button onclick="claimMaturity(${i})" class="w-full mt-4 py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/10">CLAIM PRINCIPAL</button>
-                            ` : ''}
-                        </div>`;
-                    }
-                });
-                if(count === 0) html = emptyState('Deposit');
-            } else {
-                const logs = await window.fetchBlockchainHistory(type);
-                if(logs.length === 0) {
-                    html = emptyState(type);
-                } else {
-                    logs.forEach(item => {
-                        const isPositive = type === 'income';
-                        html += `
-                        <div class="history-card">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <p class="text-[10px] font-black ${item.color} uppercase tracking-tighter">${item.type}</p>
-                                    <p class="text-[10px] font-bold text-gray-500 uppercase mt-1">${item.date} | ${item.time}</p>
-                                </div>
-                                <div class="text-right">
-                                    <h3 class="text-lg font-black orbitron ${isPositive ? 'text-green-400' : 'text-red-400'} flex items-center justify-end">
-                                        ${isPositive ? '+' : '-'} ${item.amount}
-                                    </h3>
-                                    <p class="text-[8px] text-gray-400 font-bold uppercase italic">BLOCKCHAIN CONFIRMED</p>
-                                </div>
+                            <div class="text-right">
+                                <h3 class="text-lg font-black orbitron text-white flex items-center justify-end">
+                                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon-sm">
+                                    ${amt}
+                                </h3>
+                                <p class="text-[8px] font-bold uppercase mt-1 ${isWithdrawn ? 'text-gray-600' : (isMatured ? 'text-green-400' : 'text-blue-400')}">
+                                    ${isWithdrawn ? 'WITHDRAWN' : (isMatured ? 'MATURED' : 'MINING')}
+                                </p>
                             </div>
-                        </div>`;
-                    });
+                        </div>
+                        ${!isWithdrawn && isMatured ? `
+                            <button onclick="claimMaturity(${i})" class="w-full mt-4 py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400">CLAIM PRINCIPAL</button>
+                        ` : ''}
+                    </div>`;
+                } catch (e) {
+                    console.log("End of deposits or error at index", i);
+                    break;
                 }
             }
+            if(count === 0) html = emptyState('Deposit');
+
+        } else {
+            // Income & Withdrawal logic (getTransactionHistory exists in your ABI)
+            const logs = await window.fetchBlockchainHistory(type);
+            if(logs.length === 0) {
+                html = emptyState(type);
+            } else {
+                logs.forEach(item => {
+                    const isPositive = type === 'income';
+                    html += `
+                    <div class="history-card mb-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-[10px] font-black ${item.color} uppercase tracking-tighter">${item.type}</p>
+                                <p class="text-[10px] font-bold text-gray-500 mt-1">${item.date} | ${item.time}</p>
+                            </div>
+                            <div class="text-right">
+                                <h3 class="text-lg font-black orbitron ${isPositive ? 'text-green-400' : 'text-red-400'} flex items-center justify-end">
+                                    ${isPositive ? '+' : '-'} ${item.amount}
+                                </h3>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            }
+        }
+      
             container.innerHTML = html;
             lucide.createIcons();
         } catch (err) {
@@ -226,3 +244,4 @@
     </script>
 </body>
 </html>
+
