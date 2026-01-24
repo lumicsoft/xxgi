@@ -168,21 +168,123 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="components.js"></script>
     <script src="web3-handler.js"></script>
-    <script>
-        lucide.createIcons();
+   <script>
+lucide.createIcons();
 
-        // Note: Map 'pendingMyROI' from smart contract to 'projected-return' ID in your web3-handler.js
+// 1. Connection Watcher: Yeh check karta rahega ki wallet connect hua ya nahi
+async function watchConnection() {
+    if (window.contract && window.signer) {
+        console.log("Dashboard: Wallet Linked. Syncing Data...");
+        loadDashboardData();
+    } else {
+        // Har 1 second mein check karega jab tak connection na mil jaye
+        setTimeout(watchConnection, 1000);
+    }
+}
+
+// 2. Main Data Loader: Jo contract se saara data uthayega
+async function loadDashboardData() {
+    try {
+        const address = await window.signer.getAddress();
         
-        function copyLink() {
-            const refInput = document.getElementById('refURL');
-            if (refInput.value.includes("Connect")) {
-                alert("Please connect your wallet first!");
-                return;
-            }
-            refInput.select();
-            document.execCommand('copy');
-            alert("Referral link copied!");
+        // Contract function call (Mapping it according to your ABI)
+        const data = await window.contract.fetchAllUserData(address);
+
+        // --- UI Updates ---
+        const setVal = (id, val) => { 
+            const el = document.getElementById(id); 
+            if(el) el.innerText = val; 
+        };
+
+        // Numbers update (format function web3-handler.js se aa raha hai)
+        setVal('total-deposit-display', format(data.totalSelfInvestment));
+        setVal('active-deposit', format(data.totalSelfInvestment)); // Assuming self is active
+        setVal('total-earned', format(data.totalLevelIncome.add(data.totalLevelROIIncome)));
+        setVal('withdrawable-display', format(data.availableWithdrawable));
+        setVal('withdrawable-balance-main', format(data.availableWithdrawable));
+        setVal('total-withdrawn', format(data.totalWithdrawn));
+        setVal('projected-return', format(data.pendingMaturity)); // Mapping pending ROI
+
+        // Status Badge Update
+        const statusBadge = document.getElementById('status-badge');
+        if(parseFloat(format(data.totalSelfInvestment)) > 0) {
+            statusBadge.innerHTML = "● Active Status";
+            statusBadge.classList.replace('bg-red-500/20', 'bg-green-500/20');
+            statusBadge.classList.replace('text-red-500', 'text-green-500');
+            statusBadge.classList.remove('animate-pulse');
         }
-    </script>
+
+        // Referral Link Generation
+        const baseUrl = window.location.origin + "/register.html";
+        if(data.username && data.username !== "") {
+            document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
+        } else {
+            document.getElementById('refURL').value = "User Not Registered";
+        }
+
+    } catch (err) {
+        console.error("Dashboard Sync Error:", err);
+    }
+}
+
+// 3. Investment Handler
+async function handleInvest() {
+    const amount = document.getElementById('deposit-amount').value;
+    if(!amount || amount < 10) {
+        alert("Minimum deposit is 10 USDT");
+        return;
+    }
+    
+    try {
+        const btn = document.getElementById('deposit-btn');
+        btn.innerText = "PROCESSING...";
+        btn.disabled = true;
+
+        // Note: Yahan invest function ka logic aapke contract ke hisab se hona chahiye
+        // Agar USDT use kar rahe hain toh pehle 'approve' call karna hoga
+        const tx = await window.contract.invest(ethers.utils.parseEther(amount));
+        await tx.wait();
+        
+        alert("Deposit Successful!");
+        loadDashboardData(); // Refresh data
+    } catch (err) {
+        console.error("Deposit Failed:", err);
+        alert("Transaction Failed!");
+    } finally {
+        const btn = document.getElementById('deposit-btn');
+        btn.innerHTML = `DEPOSIT NOW <i data-lucide="arrow-up-right" class="w-4 h-4 inline-block ml-1"></i>`;
+        btn.disabled = false;
+        lucide.createIcons();
+    }
+}
+
+// 4. Withdrawal Handler
+async function handleClaim() {
+    try {
+        const tx = await window.contract.withdrawWorking();
+        await tx.wait();
+        alert("Withdrawal Successful!");
+        loadDashboardData();
+    } catch (err) {
+        console.error("Withdrawal Error:", err);
+        alert("Withdrawal Failed!");
+    }
+}
+
+// Page load hone par watching shuru
+window.addEventListener('load', watchConnection);
+
+function copyLink() {
+    const refInput = document.getElementById('refURL');
+    if (refInput.value.includes("Connect") || refInput.value === "") {
+        alert("Please connect your wallet first!");
+        return;
+    }
+    refInput.select();
+    navigator.clipboard.writeText(refInput.value);
+    alert("Referral link copied!");
+}
+</script>
 </body>
 </html>
+
