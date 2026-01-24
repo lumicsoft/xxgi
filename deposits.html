@@ -15,6 +15,7 @@
         .progress-bar { background: linear-gradient(90deg, #f59e0b, #fbbf24); height: 100%; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); transition: width 1s ease-in-out; }
         .usdt-icon { width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 6px; }
         .usdt-icon-sm { width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+        .premium-border { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; }
     </style>
 </head>
 <body class="bg-[#050505] text-white">
@@ -35,14 +36,14 @@
 
         <div class="grid grid-cols-2 gap-6 mb-10">
             <div class="premium-border p-6 text-center">
-                <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Total Active Capital</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Total Available Balance</p>
                 <h3 class="text-2xl font-black orbitron text-white flex items-center justify-center">
                     <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon">
                     <span id="total-active-capital">0.00</span>
                 </h3>
             </div>
             <div class="premium-border p-6 text-center">
-                <p class="text-[10px] font-black text-yellow-500 uppercase mb-1">Estimated Daily Profit</p>
+                <p class="text-[10px] font-black text-yellow-500 uppercase mb-1">Live Pending ROI</p>
                 <h3 class="text-2xl font-black orbitron text-green-400 flex items-center justify-center">
                     <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon">
                     <span id="total-daily-profit">0.00</span>
@@ -55,7 +56,7 @@
                 <div class="inline-block animate-spin text-yellow-500 mb-4">
                     <i data-lucide="refresh-cw" class="w-10 h-10"></i>
                 </div>
-                <p class="orbitron text-xs text-gray-500 uppercase tracking-widest">Scanning Your Nodes...</p>
+                <p class="orbitron text-xs text-gray-500 uppercase tracking-widest">Scanning Blockchain Nodes...</p>
             </div>
         </div>
     </main>
@@ -67,113 +68,133 @@
     <script src="web3-handler.js"></script>
 
     <script>
-       async function loadActiveDeposits() {
-    const grid = document.getElementById('deposits-grid');
-    const capDisplay = document.getElementById('total-active-capital');
-    const profitDisplay = document.getElementById('total-daily-profit');
-    
-    if (!window.contract || !window.signer) {
-        setTimeout(loadActiveDeposits, 1000);
-        return;
-    }
+        async function loadActiveDeposits() {
+            const grid = document.getElementById('deposits-grid');
+            const capDisplay = document.getElementById('total-active-capital');
+            const profitDisplay = document.getElementById('total-daily-profit');
+            
+            if (!window.contract || !window.signer) {
+                console.log("Connecting to Contract...");
+                setTimeout(loadActiveDeposits, 1000);
+                return;
+            }
 
-    try {
-        const address = await window.signer.getAddress();
-        
-        // 1. User ki puri detail fetch karein (Array ki length nikalne ke liye)
-        // Aapke contract mein 'users' mapping public hai, toh ye user struct ka basic data dega
-        const userBasic = await window.contract.users(address);
-        
-        // 2. Dashboard data for stats
-        const dash = await window.contract.getUserDashboard(address);
-        if(capDisplay) capDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.availableBalance, 18)).toFixed(2);
-
-        let html = '';
-        let totalDailyYield = 0;
-        let hasNodes = false;
-
-        // 3. Loop through positions (Ab hum try-catch ke saath loop karenge jab tak data milna band na ho jaye)
-        for (let i = 0; i < 100; i++) { 
             try {
-                // Contract ke positions array se data le rahe hain
-                const p = await window.contract.users(address).then(u => window.contract.positions(address, i)); 
-                // Note: Agar contract error de raha hai toh iska matlab array khatam ho gaya
+                const address = await window.signer.getAddress();
                 
-                const amount = parseFloat(ethers.utils.formatUnits(p.amount, 18));
-                if (amount <= 0) break;
+                // Fetching Dashboard Data
+                const dash = await window.contract.getUserDashboard(address);
+                if(capDisplay) capDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.availableBalance, 18)).toFixed(2);
+                if(profitDisplay) profitDisplay.innerText = parseFloat(ethers.utils.formatUnits(dash.livePendingROI, 18)).toFixed(2);
 
-                hasNodes = true;
-                const startTime = p.startTime.toNumber();
-                const rate = p.dailyRate.toNumber(); 
-                const duration = p.duration.toNumber();
-                const isWithdrawn = p.isWithdrawn;
-                const isActive = p.active;
+                let html = '';
+                let hasNodes = false;
 
-                const nodeDailyYield = (amount * rate) / 10000;
-                if(isActive && !isWithdrawn) totalDailyYield += nodeDailyYield;
+                // Loop through positions (Struct array inside mapping needs to be accessed like this)
+                for (let i = 0; i < 50; i++) { 
+                    try {
+                        // positions(address, index) call for Position struct array
+                        const p = await window.contract.users(address).then(() => window.contract.positions(address, i));
+                        
+                        const amountRaw = p.amount;
+                        if (amountRaw.eq(0)) break; 
 
-                const currentTime = Math.floor(Date.now() / 1000);
-                let progress = (((currentTime - startTime) / (duration * 86400)) * 100).toFixed(2);
-                if (progress > 100) progress = 100;
-                if (progress < 0) progress = 0;
+                        const amount = parseFloat(ethers.utils.formatUnits(amountRaw, 18));
+                        hasNodes = true;
 
-                html += `
-                <div class="premium-border p-6 hover:translate-y-[-5px] transition-all duration-300">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <p class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest">MINING NODE #0${i + 1}</p>
-                            <h3 class="text-xl font-black orbitron text-white flex items-center">
-                                <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon-sm">
-                                ${amount.toFixed(2)}
-                            </h3>
-                        </div>
-                        <span class="${isActive && !isWithdrawn ? 'status-badge' : 'bg-white/10 text-gray-500 border border-white/10 px-3 py-1 text-[8px] rounded-full'}">
-                            ${isWithdrawn ? 'COMPLETED' : (isActive ? 'ACTIVE' : 'MATURED')}
-                        </span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="bg-white/5 border border-white/10 rounded-xl p-3">
-                            <p class="text-[8px] text-gray-500 uppercase font-black mb-1">Daily ROI</p>
-                            <p class="text-xs font-bold text-green-400">+${nodeDailyYield.toFixed(2)}</p>
-                        </div>
-                        <div class="bg-white/5 border border-white/10 rounded-xl p-3">
-                            <p class="text-[8px] text-gray-500 uppercase font-black mb-1">ROI Rate</p>
-                            <p class="text-xs font-bold text-white">${(rate/100).toFixed(2)}%</p>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-[10px] font-bold orbitron">
-                            <span class="text-gray-400">PROGRESS</span>
-                            <span class="text-white">${progress}%</span>
-                        </div>
-                        <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
-                    </div>
-                    ${progress >= 100 && !isWithdrawn ? `
-                        <button onclick="withdrawMaturityNode(${i})" class="w-full mt-6 py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400">
-                            CLAIM PRINCIPAL
-                        </button>
-                    ` : `
-                        <div class="mt-6 py-2 text-center bg-white/5 border border-white/5 rounded-xl">
-                            <p class="text-[8px] text-gray-400 font-black orbitron uppercase italic">Lock Period: ${duration} Days</p>
-                        </div>
-                    `}
+                        const startTime = p.startTime.toNumber();
+                        const rate = p.dailyRate.toNumber(); 
+                        const duration = p.duration.toNumber();
+                        const isWithdrawn = p.isWithdrawn;
+                        const isActive = p.active;
+
+                        // ROI Calculation
+                        const nodeDailyYield = (amount * rate) / 10000;
+
+                        // Progress Calculation
+                        const currentTime = Math.floor(Date.now() / 1000);
+                        const endTime = startTime + (duration * 86400);
+                        let progress = (((currentTime - startTime) / (duration * 86400)) * 100).toFixed(2);
+                        if (progress > 100) progress = 100;
+                        if (progress < 0) progress = 0;
+
+                        html += `
+                        <div class="premium-border p-6 hover:border-yellow-500/30 transition-all duration-300">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest">NODE #${i + 1}</p>
+                                    <h3 class="text-xl font-black orbitron text-white flex items-center">
+                                        <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" class="usdt-icon-sm">
+                                        ${amount.toFixed(2)}
+                                    </h3>
+                                </div>
+                                <span class="${isActive && !isWithdrawn ? 'status-badge' : 'bg-white/10 text-gray-500 px-3 py-1 text-[8px] rounded-full'}">
+                                    ${isWithdrawn ? 'WITHDRAWN' : (isActive ? 'MINING' : 'MATURED')}
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 mb-6">
+                                <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+                                    <p class="text-[8px] text-gray-500 uppercase font-black mb-1">Daily Profit</p>
+                                    <p class="text-xs font-bold text-green-400">+${nodeDailyYield.toFixed(2)}</p>
+                                </div>
+                                <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+                                    <p class="text-[8px] text-gray-500 uppercase font-black mb-1">ROI Rate</p>
+                                    <p class="text-xs font-bold text-white">${(rate/100).toFixed(2)}%</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-[10px] font-bold orbitron">
+                                    <span class="text-gray-400">MINING PROGRESS</span>
+                                    <span class="text-white">${progress}%</span>
+                                </div>
+                                <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
+                            </div>
+
+                            ${progress >= 100 && !isWithdrawn ? `
+                                <button onclick="withdrawMaturityNode(${i})" class="w-full py-3 bg-yellow-500 text-black font-black orbitron text-[10px] rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/20">
+                                    CLAIM PRINCIPAL
+                                </button>
+                            ` : `
+                                <div class="text-center py-2 bg-white/5 rounded-lg border border-white/5">
+                                    <p class="text-[8px] text-gray-500 font-bold orbitron uppercase tracking-widest">Locked for ${duration} Days</p>
+                                </div>
+                            `}
+                        </div>`;
+                    } catch (err) {
+                        break; 
+                    }
+                }
+
+                grid.innerHTML = hasNodes ? html : `
+                <div class="col-span-full text-center py-20 border-2 border-dashed border-white/5 rounded-3xl">
+                    <p class="orbitron text-xs text-gray-600 uppercase tracking-widest">No Active Mining Nodes Found</p>
                 </div>`;
-            } catch (e) {
-                // Loop tabhi rukega jab ethers error dega (i.e., index out of bounds)
-                break;
+                
+                if (window.lucide) lucide.createIcons();
+
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500 orbitron text-xs">BLOCKCHAIN SYNC ERROR</div>`;
             }
         }
 
-        if(profitDisplay) profitDisplay.innerText = totalDailyYield.toFixed(2);
-        grid.innerHTML = hasNodes ? html : `<div class="col-span-full text-center py-20 text-gray-500 orbitron text-xs border border-dashed border-white/10 rounded-3xl">NO ACTIVE NODES FOUND IN THIS WALLET</div>`;
-        if (window.lucide) lucide.createIcons();
+        async function withdrawMaturityNode(idx) {
+            try {
+                if(!window.contract) return;
+                const tx = await window.contract.withdrawMaturity(idx);
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-yellow-500">Processing Transaction...</div>`;
+                await tx.wait();
+                alert("Withdrawal Successful!");
+                loadActiveDeposits();
+            } catch (err) {
+                alert("Withdraw Failed: " + (err.reason || "Check balance or network"));
+                loadActiveDeposits();
+            }
+        }
 
-    } catch (err) {
-        console.error("Critical Sync Error:", err);
-        grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500 orbitron text-xs">CONTRACT CONNECTION ERROR</div>`;
-    }
-}
+        window.addEventListener('load', () => setTimeout(loadActiveDeposits, 1500));
     </script>
 </body>
 </html>
-
