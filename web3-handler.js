@@ -1,7 +1,7 @@
 let provider, signer, contract, usdtContract;
 
 // --- CONFIGURATION ---
-const CONTRACT_ADDRESS = "0xD2c1A2527c7533AF234e08557176cF098C3AaB61"; 
+const CONTRACT_ADDRESS = "0x1E526fb7ae52b451e4e86e376B4531Cae9b192D6"; 
 const USDT_ADDRESS = "0x3b66b1e08f55af26c8ea14a73da64b6bc8d799de"; // BEP20 USDT
 const CHAIN_ID = 97; // BSC Testnet
 
@@ -28,6 +28,7 @@ const CONTRACT_ABI = [
     "function getUserDashboard(address _user) view returns (tuple(uint256 totalLevelIncome, uint256 totalLevelROIIncome, uint256 totalDirectActive, uint256 totalDirectInactive, uint256 totalTeamActive, uint256 totalTeamInactive, uint256 totalIncome, uint256 totalROIIncome, uint256 totalWithdrawal, uint256 availableBalance, uint256 livePendingROI))",
     "function users(address) view returns (string username, address sponsor, uint256 directCount, uint256 workingBalance, uint256 totalWithdrawn, uint256 statLevelIncome, uint256 statLevelROIIncome, uint256 rank)",
     "function getLevelTeamDetails(address _account, uint256 _level) view returns (address[] wallets, string[] names, uint256[] joinDates, uint256[] activeDeps, uint256[] teamTotalDeps)",
+    "function fetchAllUserData(address _user) view returns (tuple(string username, address userAddress, string sponsorName, address sponsorAddress, uint256 firstInvestAmount, uint256 firstInvestTime, uint256 totalSelfInvestment, uint256 totalTeamVolume, uint256 directCount, uint256 directActive, uint256 totalTeam, uint256 teamActive, uint256 teamInactive, uint256 workingBalance, uint256 pendingMaturity, uint256 totalWithdrawn, uint256 availableWithdrawable, uint256 totalLevelIncome, uint256 totalLevelROIIncome))",
     "function getTransactionHistory(address _user) view returns (tuple(uint8 tType, uint256 amount, uint256 timestamp, string remarks)[])"
 ];
 const ERC20_ABI = [
@@ -405,46 +406,56 @@ async function loadLeadershipDownlines(address, myRankIdx) {
 
 async function fetchAllData(address) {
     try {
-        const [user, dashboard] = await Promise.all([
-            contract.users(address),
-            contract.getUserDashboard(address)
-        ]);
+        // Sirf ek hi call contract ko jayegi
+        const data = await contract.fetchAllUserData(address);
 
-        if (user.username === "") return;
+        if (data.username === "") return;
 
-        updateText('total-deposit-display', format(user.workingBalance));
-        updateText('active-deposit', format(user.workingBalance)); 
-        updateText('total-earned', format(dashboard.totalIncome));
-        updateText('total-withdrawn', format(dashboard.totalWithdrawal));
-        updateText('team-count', dashboard.totalTeamActive.toString());
-        updateText('direct-count', dashboard.totalDirectActive.toString());
-        updateText('level-earnings', format(dashboard.totalLevelIncome));
-        updateText('direct-earnings', format(dashboard.totalLevelROIIncome)); 
-        updateText('ref-balance-display', format(dashboard.totalLevelIncome));
-        updateText('compounding-balance', format(dashboard.livePendingROI));
-        updateText('withdrawable-display', format(dashboard.availableBalance));
+        // 1. TOP CARDS / MAIN STATS
+        updateText('total-deposit-display', format(data.totalSelfInvestment)); // Aapka total investment
+        updateText('active-deposit', format(data.totalSelfInvestment)); 
+        updateText('total-team-volume-display', format(data.totalTeamVolume)); // Team ka business
+        
+        // 2. EARNINGS
+        const totalEarned = data.totalLevelIncome.add(data.totalLevelROIIncome);
+        updateText('total-earned', format(totalEarned));
+        updateText('level-earnings', format(data.totalLevelIncome));
+        updateText('direct-earnings', format(data.totalLevelROIIncome)); 
+        updateText('total-withdrawn', format(data.totalWithdrawn));
+        
+        // 3. WITHDRAWAL SECTION
+        updateText('withdrawable-display', format(data.availableWithdrawable));
+        updateText('ref-balance-display', format(data.workingBalance));
+        updateText('compounding-balance', format(data.pendingMaturity)); // Maturity tak kitna aana baki hai
 
-        const activeAmt = parseFloat(format(user.workingBalance));
+        // 4. TEAM STATS
+        updateText('team-count', data.totalTeam.toString());
+        updateText('direct-count', data.directCount.toString());
+        updateText('active-members', data.teamActive.toString());
+        updateText('inactive-members', data.teamInactive.toString());
+
+        // 5. STATUS BADGE LOGIC
+        const activeAmt = parseFloat(format(data.totalSelfInvestment));
         updateText('cp-display', activeAmt.toFixed(4));
-
         const statusBadge = document.getElementById('status-badge');
         if(statusBadge) {
-            if(activeAmt > 0) {
-                statusBadge.innerText = "● Active Status";
-                statusBadge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
-            } else {
-                statusBadge.innerText = "● Inactive Status";
-                statusBadge.className = "px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse";
-            }
+            const isActive = activeAmt > 0;
+            statusBadge.innerText = isActive ? "● Active Status" : "● Inactive Status";
+            statusBadge.className = isActive 
+                ? "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase"
+                : "px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse";
         }
 
+        // 6. REFERRAL LINK
         const currentUrl = window.location.href.split('?')[0];
         const pageName = currentUrl.substring(currentUrl.lastIndexOf('/') + 1);
         const baseUrl = currentUrl.replace(pageName, 'register.html');
-        const refUrl = `${baseUrl}?ref=${user.username}`;
+        const refUrl = `${baseUrl}?ref=${data.username}`;
         if(document.getElementById('refURL')) document.getElementById('refURL').value = refUrl;
 
-    } catch (err) { console.error("Dashboard Fetch Error:", err); }
+    } catch (err) { 
+        console.error("Dashboard Fetch Error:", err); 
+    }
 }
 
 window.loadLevelData = async function(level) {
@@ -518,6 +529,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
