@@ -173,14 +173,10 @@ async function loadLevelData(level) {
     const tableBody = document.getElementById('team-table-body');
     if (!window.contract || !window.signer || !tableBody) return;
 
-    // Loading indicator
     tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-yellow-500 orbitron animate-pulse text-xs">SCANNING BLOCKCHAIN LEVEL ${level}...</td></tr>`;
 
     try {
         const address = await window.signer.getAddress();
-        
-        // Contract function: getLevelTeamDetails(address, uint256)
-        // Returns: TeamMember[] { address userAddress, string username, uint256 package, uint256 joinTime }
         const members = await window.contract.getLevelTeamDetails(address, level);
 
         if (!members || members.length === 0) {
@@ -190,15 +186,12 @@ async function loadLevelData(level) {
 
         let html = '';
         members.forEach((m) => {
-            // Ethers.js automatically maps struct keys: m.userAddress, m.username, m.package, m.joinTime
-            
-            // Format package amount (USDT)
-            const pkgValue = format(m.package); // format function from web3-handler.js
+            const pkgValue = format(m.package);
             const isUserActive = parseFloat(pkgValue) > 0;
 
-            // Date Formatting
             let joinDate = "---";
             if (m.joinTime && m.joinTime > 0) {
+                // toNumber() ethers ke BigNumber ke liye zaroori hai
                 joinDate = new Date(m.joinTime.toNumber() * 1000).toLocaleDateString();
             }
 
@@ -216,7 +209,7 @@ async function loadLevelData(level) {
                         <div class="flex items-center gap-1.5">
                             <span class="relative flex h-2 w-2">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${isUserActive ? 'bg-green-400' : 'bg-red-400'} opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 ${isAlive ? 'bg-green-500' : 'bg-red-500'}"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 ${isUserActive ? 'bg-green-500' : 'bg-red-500'}"></span>
                             </span>
                             <span class="${isUserActive ? 'text-green-400' : 'text-red-500'} font-bold">
                                 ${isUserActive ? 'ACTIVE' : 'INACTIVE'}
@@ -231,10 +224,9 @@ async function loadLevelData(level) {
 
     } catch (err) {
         console.error("Critical Sync Error:", err);
-        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Blockchain Error: Check ABI</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Blockchain Error: Syncing...</td></tr>`;
     }
 }
-
 // Page load hote hi checking shuru karein
 window.addEventListener('load', () => {
     setTimeout(checkConnection, 500);
@@ -252,6 +244,7 @@ window.copyLink = function() {
 </script>
 </body>
 </html>
+
 
 
 
