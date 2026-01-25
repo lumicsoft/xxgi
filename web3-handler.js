@@ -115,71 +115,57 @@ async function handleInvest() {
     const amount = amountInput.value;
     const btn = document.getElementById('deposit-btn');
 
-    // Basic Validations
-    if (!amount || parseFloat(amount) < 10) {
-        alert("Minimum investment is 10 USDT");
-        return;
-    }
-
-    if (!window.signer || !window.contract) {
-        alert("Please connect your wallet first!");
-        return;
-    }
+    if (!amount || parseFloat(amount) < 10) return alert("Min 10 USDT");
+    if (!window.signer || !window.contract) return alert("Connect Wallet!");
 
     try {
-        // UI Loading State
         btn.disabled = true;
-        btn.innerHTML = `<span class="animate-pulse">WAITING FOR APPROVAL...</span>`;
+        btn.innerHTML = `<span class="animate-pulse">CHECKING...</span>`;
 
-        // 1. USDT Contract Setup (Make sure USDT_ADDRESS is defined)
-        const USDT_ABI = [
-            "function approve(address spender, uint256 amount) public returns (bool)",
-            "function allowance(address owner, address spender) public view returns (uint256)"
-        ];
-        const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, window.signer);
-
-        // 2. Amount Conversion (18 Decimals)
         const amountInWei = ethers.utils.parseUnits(amount.toString(), 18);
         const userAddress = await window.signer.getAddress();
 
-        // 3. Check Allowance (Kya pehle se permission hai?)
-        const allowance = await usdtContract.allowance(userAddress, window.contract.address);
+        // 1. Check Allowance logic
+        const usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, window.signer);
+        const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
 
         if (allowance.lt(amountInWei)) {
-            const approveTx = await usdtContract.approve(window.contract.address, amountInWei);
+            btn.innerHTML = `<span class="animate-pulse">APPROVING USDT...</span>`;
+            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, amountInWei);
             await approveTx.wait();
-            console.log("USDT Approved");
+            // Chhota sa delay taaki RPC update ho jaye
+            await new Promise(res => setTimeout(res, 2000)); 
         }
 
-        // 4. Final Investment Call
+        // 2. Final Investment with dynamic error catch
         btn.innerHTML = `<span class="animate-pulse">CONFIRMING DEPOSIT...</span>`;
         
-        // Gas limit manually set ki hai kyunki loops wale contract mein estimation fail ho sakta hai
+        // Gas limit ko thoda kam rakhein ya ethers ko khud estimate karne dein
         const tx = await window.contract.invest(amountInWei, {
-            gasLimit: 2000000 
+            gasLimit: 800000 
         });
 
-        console.log("Transaction Hash:", tx.hash);
-        await tx.wait();
-
-        // Success Logic
-        alert("Success! Your investment of " + amount + " USDT is activated.");
-        amountInput.value = "";
-        if (typeof loadDashboardData === "function") loadDashboardData();
+        const receipt = await tx.wait();
+        if(receipt.status === 1) {
+            alert("Success! " + amount + " USDT Deposited.");
+            location.reload(); 
+        }
 
     } catch (err) {
-        console.error("Investment Error:", err);
+        console.error("INVEST_ERROR:", err);
         
-        // User-friendly error messages
-        if (err.code === 4001) {
-            alert("Transaction cancelled by user.");
-        } else if (err.message.includes("insufficient funds")) {
-            alert("Insufficient USDT or Native gas fee.");
+        // Detailed Error for you to fix
+        let errorMsg = "Transaction Failed!";
+        if (err.data && err.data.message) errorMsg = err.data.message;
+        else if (err.message) errorMsg = err.message;
+        
+        // Agar 'execution reverted' aa raha hai toh contract check karein
+        if(errorMsg.includes("reverted")) {
+            alert("Contract Error: " + errorMsg);
         } else {
-            alert("Transaction Failed! Check console for details.");
+            alert(errorMsg);
         }
     } finally {
-        // Reset Button UI
         btn.disabled = false;
         btn.innerHTML = `DEPOSIT NOW <i data-lucide="arrow-up-right" class="w-4 h-4 inline-block ml-1"></i>`;
         lucide.createIcons();
@@ -543,6 +529,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
