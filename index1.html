@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="style1.css">
     <style>
         .withdraw-btn { background: linear-gradient(135deg, #ff416c, #ff4b2b) !important; color: white !important; }
+        .capital-btn { background: linear-gradient(135deg, #00f2ff, #0066ff) !important; color: white !important; }
         .animate-spin-slow { animation: spin 8s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .deposit-input-box { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; width: 100%; color: white; outline: none; transition: 0.3s; }
@@ -65,10 +66,10 @@
         </div>
 
         <div class="premium-border p-6 mb-8">
-            <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-3">Your Referral Link</p>
+            <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-3">Referral Link</p>
             <div class="flex items-center gap-3 bg-black/40 p-2 pl-4 rounded-xl border border-white/10">
-                <input id="refURL" type="text" readonly value="Connect wallet..." class="bg-transparent border-none outline-none w-full text-xs text-gray-300 font-mono">
-                <button onclick="copyLink()" class="gold-btn !py-2 px-6">COPY</button>
+                <input id="refURL" type="text" readonly value="Connect wallet to see link..." class="bg-transparent border-none outline-none w-full text-xs text-gray-300 font-mono">
+                <button onclick="copyLink()" class="gold-btn !py-2">COPY</button>
             </div>
         </div>
 
@@ -87,51 +88,79 @@
         </div>
 
         <div class="premium-border p-8 mb-6 text-center bg-emerald-950/20">
-            <i data-lucide="wallet" class="w-8 h-8 text-yellow-500 mx-auto mb-2"></i>
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Withdrawable Balance</p>
-            <h3 class="text-4xl font-black orbitron text-white mb-8">
-                <span class="text-yellow-500 mr-2">$</span><span id="withdrawable-balance-main">0.00</span>
-            </h3>
-            <button onclick="handleClaim()" id="withdraw-btn" class="gold-btn withdraw-btn px-10 max-w-sm mx-auto w-full">
-                <i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now
-            </button>
+            <div class="relative z-10">
+                <i data-lucide="wallet" class="w-8 h-8 text-yellow-500 mx-auto mb-2"></i>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Withdrawable Balance</p>
+                <h3 class="text-4xl font-black orbitron text-white mb-8 flex items-center justify-center gap-2">
+                    <span class="text-yellow-500 mr-2">$</span>
+                    <span id="withdrawable-balance-main">0.00</span>
+                </h3>
+                <div class="flex justify-center max-w-sm mx-auto">
+                    <button onclick="handleClaim()" class="gold-btn withdraw-btn px-10 w-full">
+                        <i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="premium-border p-8 md:p-12 mb-8">
-            <div class="flex justify-between items-center mb-10">
-                <h2 class="text-xl font-black orbitron italic uppercase">Earnings <span class="text-green-400">Status</span></h2>
-                <span id="status-badge" class="px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse">● Inactive Status</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
-                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Pending Daily ROI</p>
-                    <h4 class="text-4xl font-black orbitron text-white flex items-center">
-                        <span class="text-yellow-500 mr-3">$</span><span id="projected-return">0.00</span>
-                    </h4>
+            <div class="relative z-10">
+                <div class="flex justify-between items-center mb-10">
+                    <h2 class="text-xl font-black orbitron italic uppercase">Earnings <span class="text-green-400">Status</span></h2>
+                    <span id="status-badge" class="px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse">● Inactive Status</span>
                 </div>
-                <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
-                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Next Settlement</p>
-                    <h4 id="next-timer" class="text-4xl font-black orbitron text-white">00:00:00</h4>
-                    <p class="text-[10px] text-green-400 uppercase mt-2 tracking-widest italic font-bold">Auto Distribution Enabled</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
+                            <p class="text-xs font-black text-yellow-500 uppercase mb-2">Pending Daily ROI</p>
+                            <h4 class="text-4xl font-black orbitron text-white flex items-center">
+                                <span class="text-yellow-500 mr-3">$</span>
+                                <span id="projected-return">0.00</span>
+                            </h4>
+                        </div>
+                        <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
+                            <p class="text-xs font-black text-yellow-500 uppercase mb-2">Next Settlement</p>
+                            <h4 id="next-timer" class="text-4xl font-black orbitron text-white">00:00:00</h4>
+                            <p class="text-[10px] text-green-400 uppercase mt-2 tracking-widest italic font-bold">Auto Distribution Enabled</p>
+                        </div>
                 </div>
             </div>
         </div>
 
-        <div class="premium-border mb-8 p-6 md:p-8">
-            <h3 class="text-xl font-black orbitron mb-6 uppercase italic"><span class="text-yellow-500">Daily Returns</span> by Level</h3>
-            <div class="overflow-x-auto">
-                <table class="luxury-table">
-                    <thead>
-                        <tr><th>Investment Range (USDT)</th><th>Daily Return</th></tr>
-                    </thead>
-                    <tbody id="cp-chart-body">
-                        <tr><td>10 - 500 USDT</td><td class="text-green-400 font-bold">5.00%</td></tr>
-                        <tr><td>501 - 2000 USDT</td><td class="text-green-400 font-bold">5.25%</td></tr>
-                        <tr class="bg-yellow-500/5"><td>2001 - 5000 USDT 🔥</td><td class="text-yellow-500 font-bold">5.50%</td></tr>
-                        <tr><td>5001 - 10000 USDT</td><td class="text-green-400 font-bold">5.75%</td></tr>
-                        <tr class="bg-yellow-500/10"><td class="text-yellow-400 font-black text-lg">≥ 10001 USDT 🔥</td><td class="text-yellow-400 font-black text-lg">6.00%</td></tr>
-                    </tbody>
-                </table>
+        <div class="premium-border mb-8">
+            <div class="relative z-10 p-6 md:p-8">
+                <h3 class="text-xl font-black orbitron mb-6 uppercase italic"><span class="text-yellow-500">Daily Returns</span> by Level</h3>
+                <div class="overflow-x-auto">
+                    <table class="luxury-table">
+                        <thead>
+                            <tr>
+                                <th>Investment Range (USDT)</th>
+                                <th>Daily Return</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cp-chart-body">
+                            <tr class="border-b border-white/5">
+                                <td>10 - 500 USDT</td>
+                                <td class="text-green-400 font-bold">5.00%</td>
+                            </tr>
+                            <tr class="border-b border-white/5">
+                                <td>501 - 2000 USDT</td>
+                                <td class="text-green-400 font-bold">5.25%</td>
+                            </tr>
+                            <tr class="bg-yellow-500/5 border-b border-white/5">
+                                <td>2001 - 5000 USDT 🔥</td>
+                                <td class="text-yellow-500 font-bold">5.50%</td>
+                            </tr>
+                            <tr class="border-b border-white/5">
+                                <td>5001 - 10000 USDT</td>
+                                <td class="text-green-400 font-bold">5.75%</td>
+                            </tr>
+                            <tr class="bg-yellow-500/10">
+                                <td class="text-yellow-400 font-black text-lg">≥ 10001 USDT 🔥</td>
+                                <td class="text-yellow-400 font-black text-lg">6.00%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
@@ -139,111 +168,124 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="components.js"></script>
     <script src="web3-handler.js"></script>
+   <script>
+lucide.createIcons();
 
-    <script>
+// 1. Connection Watcher: Yeh check karta rahega ki wallet connect hua ya nahi
+async function watchConnection() {
+    if (window.contract && window.signer) {
+        console.log("Dashboard: Wallet Linked. Syncing Data...");
+        loadDashboardData();
+    } else {
+        // Har 1 second mein check karega jab tak connection na mil jaye
+        setTimeout(watchConnection, 1000);
+    }
+}
+
+// 2. Main Data Loader: Jo contract se saara data uthayega
+async function loadDashboardData() {
+    try {
+        const address = await window.signer.getAddress();
+        
+        // Contract function call (Mapping it according to your ABI)
+        const data = await window.contract.fetchAllUserData(address);
+
+        // --- UI Updates ---
+        const setVal = (id, val) => { 
+            const el = document.getElementById(id); 
+            if(el) el.innerText = val; 
+        };
+
+        // Numbers update (format function web3-handler.js se aa raha hai)
+        setVal('total-deposit-display', format(data.totalSelfInvestment));
+        setVal('active-deposit', format(data.totalSelfInvestment)); // Assuming self is active
+        setVal('total-earned', format(data.totalLevelIncome.add(data.totalLevelROIIncome)));
+        setVal('withdrawable-display', format(data.availableWithdrawable));
+        setVal('withdrawable-balance-main', format(data.availableWithdrawable));
+        setVal('total-withdrawn', format(data.totalWithdrawn));
+        setVal('projected-return', format(data.pendingMaturity)); // Mapping pending ROI
+
+        // Status Badge Update
+        const statusBadge = document.getElementById('status-badge');
+        if(parseFloat(format(data.totalSelfInvestment)) > 0) {
+            statusBadge.innerHTML = "● Active Status";
+            statusBadge.classList.replace('bg-red-500/20', 'bg-green-500/20');
+            statusBadge.classList.replace('text-red-500', 'text-green-500');
+            statusBadge.classList.remove('animate-pulse');
+        }
+
+        // Referral Link Generation
+        const baseUrl = window.location.origin + "/register.html";
+        if(data.username && data.username !== "") {
+            document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
+        } else {
+            document.getElementById('refURL').value = "User Not Registered";
+        }
+
+    } catch (err) {
+        console.error("Dashboard Sync Error:", err);
+    }
+}
+
+// 3. Investment Handler
+async function handleInvest() {
+    const amount = document.getElementById('deposit-amount').value;
+    if(!amount || amount < 10) {
+        alert("Minimum deposit is 10 USDT");
+        return;
+    }
+    
+    try {
+        const btn = document.getElementById('deposit-btn');
+        btn.innerText = "PROCESSING...";
+        btn.disabled = true;
+
+        // Note: Yahan invest function ka logic aapke contract ke hisab se hona chahiye
+        // Agar USDT use kar rahe hain toh pehle 'approve' call karna hoga
+        const tx = await window.contract.invest(ethers.utils.parseEther(amount));
+        await tx.wait();
+        
+        alert("Deposit Successful!");
+        loadDashboardData(); // Refresh data
+    } catch (err) {
+        console.error("Deposit Failed:", err);
+        alert("Transaction Failed!");
+    } finally {
+        const btn = document.getElementById('deposit-btn');
+        btn.innerHTML = `DEPOSIT NOW <i data-lucide="arrow-up-right" class="w-4 h-4 inline-block ml-1"></i>`;
+        btn.disabled = false;
         lucide.createIcons();
+    }
+}
 
-        // 1. Connection Watcher: Dashboard update karne ke liye
-        async function watchConnection() {
-            if (window.contract && window.signer) {
-                console.log("Dashboard Linked!");
-                loadDashboardData();
-                startTimer();
-            } else {
-                setTimeout(watchConnection, 1000);
-            }
-        }
+// 4. Withdrawal Handler
+async function handleClaim() {
+    try {
+        const tx = await window.contract.withdrawWorking();
+        await tx.wait();
+        alert("Withdrawal Successful!");
+        loadDashboardData();
+    } catch (err) {
+        console.error("Withdrawal Error:", err);
+        alert("Withdrawal Failed!");
+    }
+}
 
-        // 2. Dashboard Data Loader
-        async function loadDashboardData() {
-            try {
-                const address = await window.signer.getAddress();
-                const data = await window.contract.fetchAllUserData(address);
+// Page load hone par watching shuru
+window.addEventListener('load', watchConnection);
 
-                const setVal = (id, val) => { 
-                    const el = document.getElementById(id); 
-                    if(el) el.innerText = val; 
-                };
-
-                // Formatted UI update
-                setVal('total-deposit-display', format(data.totalSelfInvestment));
-                setVal('active-deposit', format(data.totalSelfInvestment));
-                setVal('total-earned', format(data.totalLevelIncome.add(data.totalLevelROIIncome)));
-                setVal('withdrawable-display', format(data.availableWithdrawable));
-                setVal('withdrawable-balance-main', format(data.availableWithdrawable));
-                setVal('total-withdrawn', format(data.totalWithdrawn));
-                setVal('projected-return', format(data.pendingMaturity));
-                setVal('rank-display', data.rank || "MEMBER");
-
-                // Badge Logic
-                if(parseFloat(format(data.totalSelfInvestment)) > 0) {
-                    const badge = document.getElementById('status-badge');
-                    badge.innerHTML = "● Active Status";
-                    badge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
-                }
-
-                // Referral Link
-                if(data.username) {
-                    const baseUrl = window.location.origin + "/register.html";
-                    document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
-                }
-            } catch (err) { console.error(err); }
-        }
-
-        // 3. Simple Countdown
-        function startTimer() {
-            setInterval(() => {
-                const now = new Date();
-                const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-                const diff = target - now;
-                const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-                document.getElementById('next-timer').innerText = `${h}:${m}:${s}`;
-            }, 1000);
-        }
-
-        // 4. Action Functions (Jo handler se connect hain)
-        async function handleInvest() {
-            const amt = document.getElementById('deposit-amount').value;
-            if(!amt || amt < 10) return alert("Min 10 USDT!");
-            
-            const btn = document.getElementById('deposit-btn');
-            btn.disabled = true; btn.innerText = "Processing...";
-            
-            try {
-                // Ye function aapke web3-handler.js mein hona chahiye
-                await performInvestment(amt); 
-                loadDashboardData();
-            } catch(e) { alert("Failed!"); }
-            finally { 
-                btn.innerHTML = `DEPOSIT NOW <i data-lucide="arrow-up-right"></i>`; 
-                btn.disabled = false; lucide.createIcons();
-            }
-        }
-
-        async function handleClaim() {
-            const btn = document.getElementById('withdraw-btn');
-            btn.disabled = true;
-            try {
-                const tx = await window.contract.withdrawWorking();
-                await tx.wait();
-                alert("Success!");
-                loadDashboardData();
-            } catch(e) { alert("Error!"); }
-            finally { btn.disabled = false; }
-        }
-
-        function copyLink() {
-            const el = document.getElementById('refURL');
-            el.select();
-            navigator.clipboard.writeText(el.value);
-            alert("Copied!");
-        }
-
-        window.addEventListener('load', watchConnection);
-    </script>
+function copyLink() {
+    const refInput = document.getElementById('refURL');
+    if (refInput.value.includes("Connect") || refInput.value === "") {
+        alert("Please connect your wallet first!");
+        return;
+    }
+    refInput.select();
+    navigator.clipboard.writeText(refInput.value);
+    alert("Referral link copied!");
+}
+</script>
 </body>
 </html>
 
-
+isme full karke do mujhe kuch na karna pade
