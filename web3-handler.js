@@ -191,23 +191,30 @@ window.claimNetworkReward = async function(amountInWei) {
 
 window.handleLogin = async function() {
     try {
+        console.log("Login sequence started...");
         if (!(await ensureConnection())) return;
         
         const userAddress = await signer.getAddress();
         localStorage.removeItem('manualLogout');
         
+        // Contract se user check karein
         const userData = await contract.users(userAddress);
 
-        if (userData.username !== "") {
+        // Agar user registered hai (username empty nahi hai)
+        if (userData.username && userData.username !== "") {
+            console.log("User registered, redirecting to Dashboard...");
             if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
+            
+            // Yahan se user panel (index1.html) par bhej dega
             window.location.href = "index1.html";
         } else {
-            alert("This wallet is not registered!");
+            // Agar registered nahi hai toh registration page par bhejega
+            alert("This wallet is not registered! Redirecting to register page...");
             window.location.href = "register.html";
         }
     } catch (err) {
         console.error("Login Error:", err);
-        alert("Login failed! Make sure you are on BSC network.");
+        alert("Login failed! Please check your MetaMask or Network.");
     }
 }
 
@@ -529,6 +536,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
