@@ -190,39 +190,59 @@ window.claimNetworkReward = async function(amountInWei) {
 }
 
 window.handleLogin = async function() {
-    try {
-        if (!window.ethereum) return alert("Please install MetaMask!");
-        
-        // 1. Accounts request karein
-        const accounts = await provider.send("eth_requestAccounts", []);
-        if (accounts.length === 0) return;
-        
-        const userAddress = accounts[0]; 
-        
-        // 2. Signer aur Contract ko re-initialize karein
-        signer = provider.getSigner();
-        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-        
-        // Logout flag clear karein
-        localStorage.removeItem('manualLogout');
-        
-        // 3. Contract se user data fetch karein
-        const userData = await contract.users(userAddress);
+    try {
+        // 1. Check if MetaMask is installed
+        if (!window.ethereum) {
+            return alert("Please install MetaMask!");
+        }
 
-        // 4. Registration Check
-        if (userData.registered === true) {
-            if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
-            window.location.href = "index1.html";
-        } else {
-            alert("This wallet is not registered in Exgi!");
-            window.location.href = "register.html";
-        }
-    } catch (err) {
-        console.error("Login Error:", err);
-        alert("Login failed! Make sure you are on BSC Mainnet.");
-    }
+        // 2. Initialize Provider
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        
+        // 3. Request Accounts
+        const accounts = await provider.send("eth_requestAccounts", []);
+        if (accounts.length === 0) return;
+        
+        const userAddress = accounts[0]; 
+        
+        // 4. Initialize Signer & Contract (Global Variables)
+        window.signer = provider.getSigner();
+        window.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, window.signer);
+        
+        // Logout flag clear karein
+        localStorage.removeItem('manualLogout');
+        
+        // 5. Fetch User Data from Contract
+        console.log("Checking registration for:", userAddress);
+        const userData = await window.contract.users(userAddress);
+
+        /** * IMPORTANT: Agar aapke contract mein 'registered' boolean nahi hai, 
+         * toh 'userData.username !== ""' ya 'userData.startTime > 0' use karein.
+         */
+        const isRegistered = userData.registered === true || (userData.username && userData.username !== "");
+
+        if (isRegistered) {
+            console.log("User is registered. Redirecting to Dashboard...");
+            if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
+            
+            // Redirect to User Panel
+            window.location.href = "index1.html";
+        } else {
+            alert("This wallet is not registered in Exgee!");
+            window.location.href = "register.html";
+        }
+
+    } catch (err) {
+        console.error("Login Error Details:", err);
+        
+        // Handle User Rejection
+        if (err.code === 4001) {
+            alert("Connection rejected by user.");
+        } else {
+            alert("Login failed! Please ensure you are connected to BSC Mainnet.");
+        }
+    }
 }
-
 window.handleRegister = async function() {
     if (!(await ensureConnection())) return;
 
@@ -541,6 +561,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
