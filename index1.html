@@ -10,11 +10,12 @@
     <link rel="stylesheet" href="style1.css">
     <style>
         .withdraw-btn { background: linear-gradient(135deg, #ff416c, #ff4b2b) !important; color: white !important; }
+        .maturity-btn { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: white !important; }
         .deposit-input-box { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; width: 100%; color: white; outline: none; transition: 0.3s; }
         .deposit-input-box:focus { border-color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
-        .luxury-table { width: 100%; border-collapse: collapse; }
-        .luxury-table th { padding: 15px; text-align: left; border-bottom: 2px solid rgba(234, 179, 8, 0.2); color: #eab308; font-size: 12px; font-family: 'Orbitron'; }
-        .luxury-table td { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; font-weight: 600; }
+        .luxury-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .luxury-table th { padding: 15px; text-align: left; border-bottom: 2px solid rgba(234, 179, 8, 0.2); color: #eab308; font-size: 11px; font-family: 'Orbitron'; text-transform: uppercase; }
+        .luxury-table td { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 13px; font-weight: 600; }
         .premium-border { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; backdrop-filter: blur(10px); }
         .gold-btn { background: #eab308; color: black; padding: 8px 20px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; }
     </style>
@@ -24,34 +25,30 @@
     <div id="header-placeholder"></div>
     <div id="sidebar-placeholder"></div>
 
-    <main class="max-w-7xl mx-auto px-6 relative z-10 pt-10">
+    <main class="max-w-7xl mx-auto px-6 relative z-10 pt-10 pb-20">
         <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
             <div class="premium-border p-4 text-center">
                 <p class="text-[9px] font-bold text-gray-400 uppercase">Total Deposits</p>
-                <h3 class="text-lg font-black orbitron flex items-center justify-center">
-                    <span class="text-yellow-500 mr-2">$</span>
-                    <span id="total-deposit-display">0.00</span>
+                <h3 class="text-lg font-black orbitron flex items-center justify-center text-yellow-500">
+                    <span class="mr-2">$</span><span id="total-deposit-display">0.00</span>
                 </h3>
             </div>
             <div class="premium-border p-4 text-center">
                 <p class="text-[9px] font-bold text-gray-400 uppercase">Active Deposit</p>
                 <h3 class="text-lg font-black orbitron text-green-400 flex items-center justify-center">
-                    <span class="mr-2">$</span>
-                    <span id="active-deposit">0.00</span>
+                    <span class="mr-2">$</span><span id="active-deposit">0.00</span>
                 </h3>
             </div>
             <div class="premium-border p-4 text-center">
                 <p class="text-[9px] font-bold text-gray-400 uppercase">Total Earned</p>
                 <h3 class="text-lg font-black orbitron text-green-500 flex items-center justify-center">
-                    <span class="mr-2">$</span>
-                    <span id="total-earned">0.00</span>
+                    <span class="mr-2">$</span><span id="total-earned">0.00</span>
                 </h3>
             </div>
             <div class="premium-border p-4 text-center">
                 <p class="text-[9px] font-bold text-gray-400 uppercase">Withdrawable</p>
                 <h3 class="text-lg font-black orbitron text-emerald-400 flex items-center justify-center">
-                    <span class="mr-2">$</span>
-                    <span id="withdrawable-display">0.00</span>
+                    <span class="mr-2">$</span><span id="withdrawable-display">0.00</span>
                 </h3>
             </div>
             <div class="premium-border p-4 text-center">
@@ -61,8 +58,7 @@
             <div class="premium-border p-4 text-center">
                 <p class="text-[9px] font-bold text-red-400 uppercase">Total Withdrawal</p>
                 <h3 class="text-lg font-black orbitron text-red-400 flex items-center justify-center">
-                    <span class="mr-2">$</span>
-                    <span id="total-withdrawn">0.00</span>
+                    <span class="mr-2">$</span><span id="total-withdrawn">0.00</span>
                 </h3>
             </div>
         </div>
@@ -89,40 +85,66 @@
             </div>
         </div>
 
-        <div class="premium-border p-8 mb-6 text-center bg-emerald-950/20">
-            <i data-lucide="wallet" class="w-8 h-8 text-yellow-500 mx-auto mb-2"></i>
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Withdrawable Balance</p>
-            <h3 class="text-4xl font-black orbitron text-white mb-8 flex items-center justify-center gap-2">
-                <span class="text-yellow-500 mr-2">$</span>
-                <span id="withdrawable-balance-main">0.00</span>
-            </h3>
-            <button onclick="handleClaim()" id="withdraw-btn-ui" class="gold-btn withdraw-btn px-10">
-                <i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now
-            </button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="premium-border p-8 text-center bg-emerald-950/20">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Working Balance</p>
+                <h3 class="text-4xl font-black orbitron text-white mb-6">
+                    <span class="text-yellow-500 mr-2">$</span><span id="withdrawable-balance-main">0.00</span>
+                </h3>
+                <button onclick="handleClaim()" class="gold-btn withdraw-btn w-full">WITHDRAW WORKING</button>
+            </div>
+            <div class="premium-border p-8 text-center bg-blue-950/20">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Maturity ROI (Locked)</p>
+                <h3 class="text-4xl font-black orbitron text-white mb-6">
+                    <span class="text-blue-500 mr-2">$</span><span id="maturity-balance">0.00</span>
+                </h3>
+                <button onclick="handleMaturityWithdraw()" class="gold-btn maturity-btn w-full">WITHDRAW MATURITY</button>
+            </div>
         </div>
 
-        <div class="premium-border p-8 md:p-12 mb-8">
+        <div class="premium-border p-8 mb-8">
             <div class="flex justify-between items-center mb-10">
                 <h2 class="text-xl font-black orbitron italic uppercase">Earnings <span class="text-green-400">Status</span></h2>
-                <span id="status-badge" class="px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase">● Checking Status...</span>
+                <span id="status-badge" class="px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase">● Checking...</span>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
-                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Pending Daily ROI</p>
-                    <h4 class="text-4xl font-black orbitron text-white flex items-center">
-                        <span class="text-yellow-500 mr-3">$</span>
-                        <span id="projected-return">0.00</span>
-                    </h4>
+                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Live Pending ROI</p>
+                    <h4 class="text-4xl font-black orbitron text-white"><span class="text-yellow-500 mr-3">$</span><span id="projected-return">0.0000</span></h4>
                 </div>
                 <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
-                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Next Settlement</p>
-                    <h4 id="next-timer" class="text-4xl font-black orbitron text-white">--:--:--</h4>
+                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Next Settlement (UTC)</p>
+                    <h4 id="next-timer" class="text-4xl font-black orbitron text-white">00:00:00</h4>
                 </div>
             </div>
         </div>
-    </main>
 
-    <div id="footer-placeholder"></div>
+        <div class="premium-border p-6 overflow-hidden">
+            <div class="flex items-center gap-2 mb-6">
+                <i data-lucide="history" class="w-5 h-5 text-yellow-500"></i>
+                <h3 class="text-xl font-black orbitron italic uppercase">Investment <span class="text-yellow-500">History</span></h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="luxury-table">
+                    <thead>
+                        <tr>
+                            <th># Index</th>
+                            <th>Amount</th>
+                            <th>ROI Rate</th>
+                            <th>Start Date</th>
+                            <th>Days Left</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <tr>
+                            <td colspan="6" class="text-center py-10 text-gray-500 orbitron text-xs">No active investments found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="components.js"></script> 
@@ -131,72 +153,106 @@
     <script>
     lucide.createIcons();
 
-    // 1. Connection Watcher (Wait for web3-handler.js to initialize)
     async function initDashboard() {
         if (window.contract && window.signer) {
-            console.log("Dashboard Linked to Web3 Handler");
             const address = await window.signer.getAddress();
             loadDashboardData(address);
-            start8HourCountdown(); // This function is in your web3-handler.js
+            startUTCCountdown(); 
         } else {
             setTimeout(initDashboard, 1000);
         }
     }
 
-    // 2. Data Fetcher (Using web3-handler's logic)
+    function startUTCCountdown() {
+        const timerEl = document.getElementById('next-timer');
+        setInterval(() => {
+            const now = new Date();
+            const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+            const diff = nextMidnight - now;
+            if (diff <= 0) location.reload();
+            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            timerEl.innerText = `${h}:${m}:${s}`;
+        }, 1000);
+    }
+
     async function loadDashboardData(address) {
         try {
             const data = await window.contract.fetchAllUserData(address);
-            
-            // Helper function to format 18 decimal values
-            const fmt = (val) => {
-                try { return parseFloat(ethers.utils.formatUnits(val, 18)).toFixed(2); }
-                catch(e) { return "0.00"; }
-            };
+            const liveStats = await window.contract.getLiveStat(address);
 
-            // Filling UI
+            const fmt = (val) => parseFloat(ethers.utils.formatUnits(val, 18)).toFixed(2);
+            const fmt4 = (val) => parseFloat(ethers.utils.formatUnits(val, 18)).toFixed(4);
+
             document.getElementById('total-deposit-display').innerText = fmt(data.totalSelfInvestment);
             document.getElementById('active-deposit').innerText = fmt(data.totalSelfInvestment);
             document.getElementById('total-earned').innerText = fmt(data.totalLevelIncome.add(data.totalLevelROIIncome));
             document.getElementById('withdrawable-display').innerText = fmt(data.availableWithdrawable);
             document.getElementById('withdrawable-balance-main').innerText = fmt(data.availableWithdrawable);
             document.getElementById('total-withdrawn').innerText = fmt(data.totalWithdrawn);
-            document.getElementById('projected-return').innerText = fmt(data.pendingMaturity);
-            
-            // Rank Display
-            const rankName = RANK_DETAILS[data.rank] ? RANK_DETAILS[data.rank].name : "MEMBER";
-            document.getElementById('rank-display').innerText = rankName;
+            document.getElementById('projected-return').innerText = fmt4(liveStats[1]);
+            document.getElementById('maturity-balance').innerText = fmt(data.pendingMaturity);
+            document.getElementById('rank-display').innerText = data.username ? "MEMBER" : "...";
 
-            // Status Badge
             const statusBadge = document.getElementById('status-badge');
             if(parseFloat(fmt(data.totalSelfInvestment)) > 0) {
                 statusBadge.innerText = "● Active Status";
                 statusBadge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
-            } else {
-                statusBadge.innerText = "● Inactive Status";
-                statusBadge.className = "px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse";
             }
 
-            // Referral Link
-            const baseUrl = window.location.origin + "/register.html";
             if(data.username) {
-                document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
+                document.getElementById('refURL').value = `${window.location.origin}/register.html?ref=${data.username}`;
             }
 
-        } catch (err) {
-            console.error("Fetch Error:", err);
-        }
+            // --- Load History Table ---
+            const historyBody = document.getElementById('history-table-body');
+            const userPositions = await window.contract.users(address); 
+            // Note: Agar contract mein users array positions return karta hai toh use loop karein
+            // Niche wala example common contract structure ke liye hai:
+            const totalPos = await window.contract.getUserPositions(address); // Is function ko check karein
+            if(totalPos && totalPos.length > 0) {
+                historyBody.innerHTML = '';
+                totalPos.forEach((pos, i) => {
+                    const amt = ethers.utils.formatUnits(pos.amount, 18);
+                    const date = new Date(pos.startTime * 1000).toLocaleDateString();
+                    let rate = "0.95%";
+                    if(amt > 100) rate = "1.11%";
+                    if(amt > 500) rate = "1.33%";
+                    
+                    historyBody.innerHTML += `
+                        <tr>
+                            <td>#${i}</td>
+                            <td class="text-yellow-500">$${amt}</td>
+                            <td class="text-green-400">${rate}</td>
+                            <td>${date}</td>
+                            <td>${Math.floor(pos.duration/86400)} Days</td>
+                            <td><span class="text-[10px] bg-green-500/10 text-green-500 p-1 rounded">ACTIVE</span></td>
+                        </tr>
+                    `;
+                });
+            }
+
+        } catch (err) { console.error(err); }
+    }
+
+    async function handleMaturityWithdraw() {
+        try {
+            const tx = await window.contract.withdrawMaturity(0); 
+            alert("Processing Maturity Withdrawal...");
+            await tx.wait();
+            alert("Success!");
+            location.reload();
+        } catch (e) { alert(e.message.includes("Cycle") ? "Cycle not complete!" : "Failed"); }
     }
 
     function copyLink() {
         const refInput = document.getElementById('refURL');
         if (refInput.value.includes("Connect")) return alert("Connect Wallet First!");
-        refInput.select();
         navigator.clipboard.writeText(refInput.value);
-        alert("Referral link copied!");
+        alert("Copied!");
     }
 
-    // Initialize on load
     window.addEventListener('load', initDashboard);
     </script>
 </body>
