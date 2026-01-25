@@ -1,285 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Earn USDT</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style1.css">
-    <style>
-        .withdraw-btn { background: linear-gradient(135deg, #ff416c, #ff4b2b) !important; color: white !important; }
-        .animate-spin-slow { animation: spin 8s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .deposit-input-box { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; width: 100%; color: white; outline: none; transition: 0.3s; }
-        .deposit-input-box:focus { border-color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
-        .luxury-table { width: 100%; border-collapse: collapse; }
-        .luxury-table th { padding: 15px; text-align: left; border-bottom: 2px solid rgba(234, 179, 8, 0.2); color: #eab308; font-size: 12px; font-family: 'Orbitron'; }
-        .luxury-table td { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; font-weight: 600; }
-        .premium-border { border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); }
-        .gold-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(234, 179, 8, 0.3); }
-        .gold-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px #eab308; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Earn USDT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style1.css">
+    <style>
+        .withdraw-btn { background: linear-gradient(135deg, #ff416c, #ff4b2b) !important; color: white !important; }
+        .animate-spin-slow { animation: spin 8s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .deposit-input-box { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; width: 100%; color: white; outline: none; transition: 0.3s; }
+        .deposit-input-box:focus { border-color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
+        .luxury-table { width: 100%; border-collapse: collapse; }
+        .luxury-table th { padding: 15px; text-align: left; border-bottom: 2px solid rgba(234, 179, 8, 0.2); color: #eab308; font-size: 12px; font-family: 'Orbitron'; }
+        .luxury-table td { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; font-weight: 600; }
+    </style>
 </head>
-<body class="bg-[#050505] text-white"> 
+<body class="bg-[#050505] text-white"> 
 
-    <main class="max-w-7xl mx-auto px-6 relative z-10 pt-10">
-        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-gray-400 uppercase">Total Deposits</p>
-                <h3 class="text-lg font-black orbitron flex items-center justify-center">
-                    <span class="text-yellow-500 mr-2">$</span>
-                    <span id="total-deposit-display">0.00</span>
-                </h3>
-            </div>
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-gray-400 uppercase">Active Deposit</p>
-                <h3 class="text-lg font-black orbitron text-green-400 flex items-center justify-center">
-                    <span class="mr-2">$</span>
-                    <span id="active-deposit">0.00</span>
-                </h3>
-            </div>
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-gray-400 uppercase">Total Earned</p>
-                <h3 class="text-lg font-black orbitron text-green-500 flex items-center justify-center">
-                    <span class="mr-2">$</span>
-                    <span id="total-earned">0.00</span>
-                </h3>
-            </div>
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-gray-400 uppercase">Withdrawable</p>
-                <h3 class="text-lg font-black orbitron text-emerald-400 flex items-center justify-center">
-                    <span class="mr-2">$</span>
-                    <span id="withdrawable-display">0.00</span>
-                </h3>
-            </div>
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-yellow-500 uppercase">Rank</p> 
-                <h3 id="rank-display" class="text-lg font-black orbitron text-yellow-500 uppercase">...</h3>
-            </div>
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-red-400 uppercase">Total Withdrawal</p>
-                <h3 class="text-lg font-black orbitron text-red-400 flex items-center justify-center">
-                    <span class="mr-2">$</span>
-                    <span id="total-withdrawn">0.00</span>
-                </h3>
-            </div>
-        </div>
+    <main class="max-w-7xl mx-auto px-6 relative z-10 pt-10">
+        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+            <div class="premium-border p-4 text-center">
+                <p class="text-[9px] font-bold text-gray-400 uppercase">Total Deposits</p>
+                <h3 class="text-lg font-black orbitron flex items-center justify-center">
+                    <span class="text-yellow-500 mr-2">$</span>
+                    <span id="total-deposit-display">0.00</span>
+                </h3>
+            </div>
+            <div class="premium-border p-4 text-center">
+                <p class="text-[9px] font-bold text-gray-400 uppercase">Active Deposit</p>
+                <h3 class="text-lg font-black orbitron text-green-400 flex items-center justify-center">
+                    <span class="mr-2">$</span>
+                    <span id="active-deposit">0.00</span>
+                </h3>
+            </div>
+            <div class="premium-border p-4 text-center">
+                <p class="text-[9px] font-bold text-gray-400 uppercase">Total Earned</p>
+                <h3 class="text-lg font-black orbitron text-green-500 flex items-center justify-center">
+                    <span class="mr-2">$</span>
+                    <span id="total-earned">0.00</span>
+                </h3>
+            </div>
+            <div class="premium-border p-4 text-center">
+                <p class="text-[9px] font-bold text-gray-400 uppercase">Withdrawable</p>
+                <h3 class="text-lg font-black orbitron text-emerald-400 flex items-center justify-center">
+                    <span class="mr-2">$</span>
+                    <span id="withdrawable-display">0.00</span>
+                </h3>
+            </div>
+            <div class="premium-border p-4 text-center">
+                <p class="text-[9px] font-bold text-yellow-500 uppercase">Rank</p> 
+                <h3 id="rank-display" class="text-lg font-black orbitron text-yellow-500 uppercase">...</h3>
+            </div>
+            <div class="premium-border p-4 text-center">
+                <p class="text-[9px] font-bold text-red-400 uppercase">Total Withdrawal</p>
+                <h3 class="text-lg font-black orbitron text-red-400 flex items-center justify-center">
+                    <span class="mr-2">$</span>
+                    <span id="total-withdrawn">0.00</span>
+                </h3>
+            </div>
+        </div>
 
-        <div class="premium-border p-6 mb-8">
-            <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-3">Your Referral Link</p>
-            <div class="flex items-center gap-3 bg-black/40 p-2 pl-4 rounded-xl border border-white/10">
-                <input id="refURL" type="text" readonly value="Connect wallet..." class="bg-transparent border-none outline-none w-full text-xs text-gray-300 font-mono">
-                <button onclick="copyLink()" class="gold-btn !py-2 px-6 bg-yellow-600 text-black font-bold rounded-lg">COPY</button>
-            </div>
-        </div>
+        <div class="premium-border p-6 mb-8">
+            <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-3">Your Referral Link</p>
+            <div class="flex items-center gap-3 bg-black/40 p-2 pl-4 rounded-xl border border-white/10">
+                <input id="refURL" type="text" readonly value="Connect wallet..." class="bg-transparent border-none outline-none w-full text-xs text-gray-300 font-mono">
+                <button onclick="copyLink()" class="gold-btn !py-2 px-6">COPY</button>
+            </div>
+        </div>
 
-        <div class="premium-border p-6 mb-8 bg-yellow-500/5 border-yellow-500/20">
-            <div class="flex flex-col md:flex-row items-center gap-4">
-                <div class="w-full md:w-1/2">
-                    <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-2 ml-1">Deposit Amount (USDT)</p>
-                    <input type="number" id="deposit-amount" placeholder="Min 10 USDT" class="deposit-input-box font-black orbitron text-lg">
-                </div>
-                <div class="w-full md:w-1/2 md:pt-6">
-                    <button onclick="handleInvest()" id="deposit-btn" class="gold-btn w-full !py-4 orbitron font-black tracking-widest bg-gradient-to-r from-yellow-500 to-yellow-700 text-black rounded-xl">
-                        DEPOSIT NOW <i data-lucide="arrow-up-right" class="w-4 h-4 inline-block ml-1"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+        <div class="premium-border p-6 mb-8 bg-yellow-500/5 border-yellow-500/20">
+            <div class="flex flex-col md:flex-row items-center gap-4">
+                <div class="w-full md:w-1/2">
+                    <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-2 ml-1">Deposit Amount (USDT)</p>
+                    <input type="number" id="deposit-amount" placeholder="Min 10 USDT" class="deposit-input-box font-black orbitron text-lg">
+                </div>
+                <div class="w-full md:w-1/2 md:pt-6">
+                    <button onclick="handleInvest()" id="deposit-btn" class="gold-btn w-full !py-4 orbitron font-black tracking-widest bg-gradient-to-r from-yellow-500 to-yellow-700">
+                        DEPOSIT NOW <i data-lucide="arrow-up-right" class="w-4 h-4 inline-block ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
 
-        <div class="premium-border p-8 mb-6 text-center bg-emerald-950/20">
-            <i data-lucide="wallet" class="w-8 h-8 text-yellow-500 mx-auto mb-2"></i>
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Withdrawable Balance</p>
-            <h3 class="text-4xl font-black orbitron text-white mb-8">
-                <span class="text-yellow-500 mr-2">$</span><span id="withdrawable-balance-main">0.00</span>
-            </h3>
-            <button onclick="handleClaim()" id="withdraw-btn" class="gold-btn withdraw-btn px-10 py-4 max-w-sm mx-auto w-full rounded-xl font-bold uppercase">
-                <i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now
-            </button>
-        </div>
+        <div class="premium-border p-8 mb-6 text-center bg-emerald-950/20">
+            <i data-lucide="wallet" class="w-8 h-8 text-yellow-500 mx-auto mb-2"></i>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Withdrawable Balance</p>
+            <h3 class="text-4xl font-black orbitron text-white mb-8">
+                <span class="text-yellow-500 mr-2">$</span><span id="withdrawable-balance-main">0.00</span>
+            </h3>
+            <button onclick="handleClaim()" id="withdraw-btn" class="gold-btn withdraw-btn px-10 max-w-sm mx-auto w-full">
+                <i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now
+            </button>
+        </div>
 
-        <div class="premium-border p-8 md:p-12 mb-8">
-            <div class="flex justify-between items-center mb-10">
-                <h2 class="text-xl font-black orbitron italic uppercase">Earnings <span class="text-green-400">Status</span></h2>
-                <span id="status-badge" class="px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse">● Inactive Status</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
-                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Pending Daily ROI</p>
-                    <h4 class="text-4xl font-black orbitron text-white flex items-center">
-                        <span class="text-yellow-500 mr-3">$</span><span id="projected-return">0.00</span>
-                    </h4>
-                </div>
-                <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
-                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Next Settlement</p>
-                    <h4 id="next-timer" class="text-4xl font-black orbitron text-white">00:00:00</h4>
-                    <p class="text-[10px] text-green-400 uppercase mt-2 tracking-widest italic font-bold">Auto Distribution Enabled</p>
-                </div>
-            </div>
-        </div>
+        <div class="premium-border p-8 md:p-12 mb-8">
+            <div class="flex justify-between items-center mb-10">
+                <h2 class="text-xl font-black orbitron italic uppercase">Earnings <span class="text-green-400">Status</span></h2>
+                <span id="status-badge" class="px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse">● Inactive Status</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
+                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Pending Daily ROI</p>
+                    <h4 class="text-4xl font-black orbitron text-white flex items-center">
+                        <span class="text-yellow-500 mr-3">$</span><span id="projected-return">0.00</span>
+                    </h4>
+                </div>
+                <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
+                    <p class="text-xs font-black text-yellow-500 uppercase mb-2">Next Settlement</p>
+                    <h4 id="next-timer" class="text-4xl font-black orbitron text-white">00:00:00</h4>
+                    <p class="text-[10px] text-green-400 uppercase mt-2 tracking-widest italic font-bold">Auto Distribution Enabled</p>
+                </div>
+            </div>
+        </div>
 
-        <div class="premium-border mb-8 p-6 md:p-8">
-            <h3 class="text-xl font-black orbitron mb-6 uppercase italic"><span class="text-yellow-500">Daily Returns</span> by Level</h3>
-            <div class="overflow-x-auto">
-                <table class="luxury-table">
-                    <thead>
-                        <tr><th>Investment Range (USDT)</th><th>Daily Return</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>10 - 500 USDT</td><td class="text-green-400 font-bold">5.00%</td></tr>
-                        <tr><td>501 - 2000 USDT</td><td class="text-green-400 font-bold">5.25%</td></tr>
-                        <tr class="bg-yellow-500/5"><td>2001 - 5000 USDT 🔥</td><td class="text-yellow-500 font-bold">5.50%</td></tr>
-                        <tr><td>5001 - 10000 USDT</td><td class="text-green-400 font-bold">5.75%</td></tr>
-                        <tr class="bg-yellow-500/10"><td class="text-yellow-400 font-black text-lg">≥ 10001 USDT 🔥</td><td class="text-yellow-400 font-black text-lg">6.00%</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
+        <div class="premium-border mb-8 p-6 md:p-8">
+            <h3 class="text-xl font-black orbitron mb-6 uppercase italic"><span class="text-yellow-500">Daily Returns</span> by Level</h3>
+            <div class="overflow-x-auto">
+                <table class="luxury-table">
+                    <thead>
+                        <tr><th>Investment Range (USDT)</th><th>Daily Return</th></tr>
+                    </thead>
+                    <tbody id="cp-chart-body">
+                        <tr><td>10 - 500 USDT</td><td class="text-green-400 font-bold">5.00%</td></tr>
+                        <tr><td>501 - 2000 USDT</td><td class="text-green-400 font-bold">5.25%</td></tr>
+                        <tr class="bg-yellow-500/5"><td>2001 - 5000 USDT 🔥</td><td class="text-yellow-500 font-bold">5.50%</td></tr>
+                        <tr><td>5001 - 10000 USDT</td><td class="text-green-400 font-bold">5.75%</td></tr>
+                        <tr class="bg-yellow-500/10"><td class="text-yellow-400 font-black text-lg">≥ 10001 USDT 🔥</td><td class="text-yellow-400 font-black text-lg">6.00%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <script src="web3-handler.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="components.js"></script>
+    <script src="web3-handler.js"></script>
 
-    <script>
-        lucide.createIcons();
+    <script>
+        lucide.createIcons();
 
-        // Safety: Helper to format ether values
-        const format = (val) => {
-            if(!val) return "0.00";
-            try {
-                return parseFloat(ethers.utils.formatEther(val)).toFixed(2);
-            } catch(e) {
-                return "0.00";
-            }
-        };
+        // 1. Connection Watcher: Dashboard update karne ke liye
+        async function watchConnection() {
+            if (window.contract && window.signer) {
+                console.log("Dashboard Linked!");
+                loadDashboardData();
+                startTimer();
+            } else {
+                setTimeout(watchConnection, 1000);
+            }
+        }
 
-        // 1. Connection Watcher
-        async function watchConnection() {
-            if (window.contract && window.signer) {
-                console.log("Dashboard Connected Successfully!");
-                loadDashboardData();
-                startTimer();
-            } else {
-                // Keep checking until wallet is ready via web3-handler.js
-                setTimeout(watchConnection, 1000);
-            }
-        }
+        // 2. Dashboard Data Loader
+        async function loadDashboardData() {
+            try {
+                const address = await window.signer.getAddress();
+                const data = await window.contract.fetchAllUserData(address);
 
-        // 2. Data Loader (Uses your Smart Contract functions)
-        async function loadDashboardData() {
-            try {
-                const address = await window.signer.getAddress();
-                // Calling the big function from your contract
-                const data = await window.contract.fetchAllUserData(address);
+                const setVal = (id, val) => { 
+                    const el = document.getElementById(id); 
+                    if(el) el.innerText = val; 
+                };
 
-                const setVal = (id, val) => { 
-                    const el = document.getElementById(id); 
-                    if(el) el.innerText = val; 
-                };
+                // Formatted UI update
+                setVal('total-deposit-display', format(data.totalSelfInvestment));
+                setVal('active-deposit', format(data.totalSelfInvestment));
+                setVal('total-earned', format(data.totalLevelIncome.add(data.totalLevelROIIncome)));
+                setVal('withdrawable-display', format(data.availableWithdrawable));
+                setVal('withdrawable-balance-main', format(data.availableWithdrawable));
+                setVal('total-withdrawn', format(data.totalWithdrawn));
+                setVal('projected-return', format(data.pendingMaturity));
+                setVal('rank-display', data.rank || "MEMBER");
 
-                // Updating UI with formatted data
-                setVal('total-deposit-display', format(data.totalSelfInvestment));
-                setVal('active-deposit', format(data.totalSelfInvestment));
-                setVal('total-earned', format(data.totalLevelIncome.add(data.totalLevelROIIncome)));
-                setVal('withdrawable-display', format(data.availableWithdrawable));
-                setVal('withdrawable-balance-main', format(data.availableWithdrawable));
-                setVal('total-withdrawn', format(data.totalWithdrawn));
-                setVal('projected-return', format(data.pendingMaturity));
-                setVal('rank-display', data.rank || "MEMBER");
+                // Badge Logic
+                if(parseFloat(format(data.totalSelfInvestment)) > 0) {
+                    const badge = document.getElementById('status-badge');
+                    badge.innerHTML = "● Active Status";
+                    badge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
+                }
 
-                // Badge Logic for Active/Inactive
-                if(parseFloat(format(data.totalSelfInvestment)) > 0) {
-                    const badge = document.getElementById('status-badge');
-                    badge.innerHTML = "● Active Status";
-                    badge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
-                }
+                // Referral Link
+                if(data.username) {
+                    const baseUrl = window.location.origin + "/register.html";
+                    document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
+                }
+            } catch (err) { console.error(err); }
+        }
 
-                // Referral Link Logic
-                if(data.username && data.username !== "") {
-                    const baseUrl = window.location.origin;
-                    document.getElementById('refURL').value = `${baseUrl}/register.html?ref=${data.username}`;
-                }
-            } catch (err) { 
-                console.error("Dashboard Load Error:", err); 
-            }
-        }
+        // 3. Simple Countdown
+        function startTimer() {
+            setInterval(() => {
+                const now = new Date();
+                const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                const diff = target - now;
+                const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+                document.getElementById('next-timer').innerText = `${h}:${m}:${s}`;
+            }, 1000);
+        }
 
-        // 3. Simple ROI Timer
-        function startTimer() {
-            setInterval(() => {
-                const now = new Date();
-                const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-                const diff = target - now;
-                const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-                const timerEl = document.getElementById('next-timer');
-                if(timerEl) timerEl.innerText = `${h}:${m}:${s}`;
-            }, 1000);
-        }
+        // 4. Action Functions (Jo handler se connect hain)
+        async function handleInvest() {
+            const amt = document.getElementById('deposit-amount').value;
+            if(!amt || amt < 10) return alert("Min 10 USDT!");
+            
+            const btn = document.getElementById('deposit-btn');
+            btn.disabled = true; btn.innerText = "Processing...";
+            
+            try {
+                // Ye function aapke web3-handler.js mein hona chahiye
+                await performInvestment(amt); 
+                loadDashboardData();
+            } catch(e) { alert("Failed!"); }
+            finally { 
+                btn.innerHTML = `DEPOSIT NOW <i data-lucide="arrow-up-right"></i>`; 
+                btn.disabled = false; lucide.createIcons();
+            }
+        }
 
-        // 4. Action Handlers
-        async function handleInvest() {
-            const amt = document.getElementById('deposit-amount').value;
-            if(!amt || amt < 10) return alert("Minimum deposit is 10 USDT!");
-            
-            const btn = document.getElementById('deposit-btn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true; 
-            btn.innerText = "Processing...";
-            
-            try {
-                // NOTE: This calls the function inside your web3-handler.js
-                // Make sure your web3-handler.js has handleInvest(amount) or similar
-                if (typeof window.handleInvest === 'function') {
-                    await window.handleInvest(amt);
-                } else {
-                    // Fallback direct call if not exported to window
-                    const tx = await window.contract.invest(ethers.utils.parseEther(amt));
-                    await tx.wait();
-                }
-                alert("Investment Successful!");
-                loadDashboardData();
-            } catch(e) { 
-                console.error(e);
-                alert("Transaction Failed or Cancelled!"); 
-            } finally { 
-                btn.innerHTML = originalText;
-                btn.disabled = false; 
-                lucide.createIcons();
-            }
-        }
+        async function handleClaim() {
+            const btn = document.getElementById('withdraw-btn');
+            btn.disabled = true;
+            try {
+                const tx = await window.contract.withdrawWorking();
+                await tx.wait();
+                alert("Success!");
+                loadDashboardData();
+            } catch(e) { alert("Error!"); }
+            finally { btn.disabled = false; }
+        }
 
-        async function handleClaim() {
-            const btn = document.getElementById('withdraw-btn');
-            btn.disabled = true;
-            btn.innerText = "Withdrawing...";
-            try {
-                const tx = await window.contract.withdrawWorking();
-                await tx.wait();
-                alert("Withdrawal Successful!");
-                loadDashboardData();
-            } catch(e) { 
-                alert("Withdrawal Failed!"); 
-            } finally { 
-                btn.innerHTML = `<i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now`;
-                btn.disabled = false; 
-                lucide.createIcons();
-            }
-        }
+        function copyLink() {
+            const el = document.getElementById('refURL');
+            el.select();
+            navigator.clipboard.writeText(el.value);
+            alert("Copied!");
+        }
 
-        function copyLink() {
-            const el = document.getElementById('refURL');
-            if(el.value.includes("Connect")) return alert("Please connect wallet first!");
-            el.select();
-            navigator.clipboard.writeText(el.value);
-            alert("Referral link copied to clipboard!");
-        }
-
-        // Start the watcher on page load
-        window.addEventListener('load', watchConnection);
-    </script>
+        window.addEventListener('load', watchConnection);
+    </script>
 </body>
 </html>
+ye code pura hona chaiye koi bhi missing na ho
