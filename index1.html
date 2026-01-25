@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="style1.css">
     <style>
         .withdraw-btn { background: linear-gradient(135deg, #ff416c, #ff4b2b) !important; color: white !important; }
-        .capital-btn { background: linear-gradient(135deg, #00f2ff, #0066ff) !important; color: white !important; }
         .deposit-input-box { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; width: 100%; color: white; outline: none; transition: 0.3s; }
         .deposit-input-box:focus { border-color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
         .luxury-table { width: 100%; border-collapse: collapse; }
@@ -69,9 +68,9 @@
         </div>
 
         <div class="premium-border p-6 mb-8">
-            <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-3">Referral Link</p>
+            <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-3">Your Referral Link</p>
             <div class="flex items-center gap-3 bg-black/40 p-2 pl-4 rounded-xl border border-white/10">
-                <input id="refURL" type="text" readonly value="Connect wallet to see link..." class="bg-transparent border-none outline-none w-full text-xs text-gray-300 font-mono">
+                <input id="refURL" type="text" readonly value="Connect wallet..." class="bg-transparent border-none outline-none w-full text-xs text-gray-300 font-mono">
                 <button onclick="copyLink()" class="gold-btn !py-2">COPY</button>
             </div>
         </div>
@@ -97,7 +96,7 @@
                 <span class="text-yellow-500 mr-2">$</span>
                 <span id="withdrawable-balance-main">0.00</span>
             </h3>
-            <button onclick="handleClaim()" class="gold-btn withdraw-btn px-10">
+            <button onclick="handleClaim()" id="withdraw-btn-ui" class="gold-btn withdraw-btn px-10">
                 <i data-lucide="arrow-down-to-line" class="w-4 h-4 inline-block mr-2"></i> Withdraw Now
             </button>
         </div>
@@ -105,7 +104,7 @@
         <div class="premium-border p-8 md:p-12 mb-8">
             <div class="flex justify-between items-center mb-10">
                 <h2 class="text-xl font-black orbitron italic uppercase">Earnings <span class="text-green-400">Status</span></h2>
-                <span id="status-badge" class="px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse">● Inactive Status</span>
+                <span id="status-badge" class="px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase">● Checking Status...</span>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
@@ -117,24 +116,8 @@
                 </div>
                 <div class="inner-plate p-8 bg-black/20 rounded-2xl border border-white/5">
                     <p class="text-xs font-black text-yellow-500 uppercase mb-2">Next Settlement</p>
-                    <h4 id="next-timer" class="text-4xl font-black orbitron text-white">24:00:00</h4>
+                    <h4 id="next-timer" class="text-4xl font-black orbitron text-white">--:--:--</h4>
                 </div>
-            </div>
-        </div>
-
-        <div class="premium-border mb-8 p-6 md:p-8">
-            <h3 class="text-xl font-black orbitron mb-6 uppercase italic"><span class="text-yellow-500">Daily Returns</span> by Level</h3>
-            <div class="overflow-x-auto">
-                <table class="luxury-table">
-                    <thead>
-                        <tr><th>Investment Range</th><th>Daily Return</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>10 - 500 USDT</td><td class="text-green-400">5.00%</td></tr>
-                        <tr><td>501 - 2000 USDT</td><td class="text-green-400">5.25%</td></tr>
-                        <tr class="bg-yellow-500/5"><td>2001 - 5000 USDT 🔥</td><td class="text-yellow-500">5.50%</td></tr>
-                    </tbody>
-                </table>
             </div>
         </div>
     </main>
@@ -145,95 +128,76 @@
     <script src="components.js"></script> 
     <script src="web3-handler.js"></script>
 
-<script>
-lucide.createIcons();
+    <script>
+    lucide.createIcons();
 
-// 1. Connection Sync Loop
-async function checkConnection() {
-    if (window.contract && window.signer) {
-        console.log("Wallet Sync Successful!");
-        loadDashboardData(); 
-    } else {
-        setTimeout(checkConnection, 1000);
-    }
-}
-
-// 2. Data Loader
-async function loadDashboardData() {
-    try {
-        const address = await window.signer.getAddress();
-        const data = await window.contract.fetchAllUserData(address);
-
-        const setVal = (id, val) => { 
-            const el = document.getElementById(id); 
-            if(el) el.innerText = val; 
-        };
-
-        // UI Updates using your format function
-        setVal('total-deposit-display', format(data.totalSelfInvestment));
-        setVal('active-deposit', format(data.totalSelfInvestment));
-        setVal('total-earned', format(data.totalLevelIncome.add(data.totalLevelROIIncome)));
-        setVal('withdrawable-display', format(data.availableWithdrawable));
-        setVal('withdrawable-balance-main', format(data.availableWithdrawable));
-        setVal('total-withdrawn', format(data.totalWithdrawn));
-        setVal('projected-return', format(data.pendingMaturity));
-        setVal('rank-display', data.rank || "MEMBER");
-
-        // Status Badge Logic
-        const statusBadge = document.getElementById('status-badge');
-        if(parseFloat(format(data.totalSelfInvestment)) > 0) {
-            statusBadge.innerHTML = "● Active Status";
-            statusBadge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
+    // 1. Connection Watcher (Wait for web3-handler.js to initialize)
+    async function initDashboard() {
+        if (window.contract && window.signer) {
+            console.log("Dashboard Linked to Web3 Handler");
+            const address = await window.signer.getAddress();
+            loadDashboardData(address);
+            start8HourCountdown(); // This function is in your web3-handler.js
+        } else {
+            setTimeout(initDashboard, 1000);
         }
+    }
 
-        // Referral URL
-        const baseUrl = window.location.origin + "/register.html";
-        if(data.username && data.username !== "") {
-            document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
+    // 2. Data Fetcher (Using web3-handler's logic)
+    async function loadDashboardData(address) {
+        try {
+            const data = await window.contract.fetchAllUserData(address);
+            
+            // Helper function to format 18 decimal values
+            const fmt = (val) => {
+                try { return parseFloat(ethers.utils.formatUnits(val, 18)).toFixed(2); }
+                catch(e) { return "0.00"; }
+            };
+
+            // Filling UI
+            document.getElementById('total-deposit-display').innerText = fmt(data.totalSelfInvestment);
+            document.getElementById('active-deposit').innerText = fmt(data.totalSelfInvestment);
+            document.getElementById('total-earned').innerText = fmt(data.totalLevelIncome.add(data.totalLevelROIIncome));
+            document.getElementById('withdrawable-display').innerText = fmt(data.availableWithdrawable);
+            document.getElementById('withdrawable-balance-main').innerText = fmt(data.availableWithdrawable);
+            document.getElementById('total-withdrawn').innerText = fmt(data.totalWithdrawn);
+            document.getElementById('projected-return').innerText = fmt(data.pendingMaturity);
+            
+            // Rank Display
+            const rankName = RANK_DETAILS[data.rank] ? RANK_DETAILS[data.rank].name : "MEMBER";
+            document.getElementById('rank-display').innerText = rankName;
+
+            // Status Badge
+            const statusBadge = document.getElementById('status-badge');
+            if(parseFloat(fmt(data.totalSelfInvestment)) > 0) {
+                statusBadge.innerText = "● Active Status";
+                statusBadge.className = "px-4 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-black border border-green-500/30 uppercase";
+            } else {
+                statusBadge.innerText = "● Inactive Status";
+                statusBadge.className = "px-4 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-black border border-red-500/30 uppercase animate-pulse";
+            }
+
+            // Referral Link
+            const baseUrl = window.location.origin + "/register.html";
+            if(data.username) {
+                document.getElementById('refURL').value = `${baseUrl}?ref=${data.username}`;
+            }
+
+        } catch (err) {
+            console.error("Fetch Error:", err);
         }
-
-    } catch (err) {
-        console.error("Dashboard Sync Error:", err);
     }
-}
 
-// 3. Actions
-async function handleInvest() {
-    const amount = document.getElementById('deposit-amount').value;
-    if(!amount || amount < 10) return alert("Min 10 USDT");
-    try {
-        const btn = document.getElementById('deposit-btn');
-        btn.innerText = "WAITING..."; btn.disabled = true;
-        const tx = await window.contract.invest(ethers.utils.parseUnits(amount, 18));
-        await tx.wait();
-        alert("Success!");
-        loadDashboardData();
-    } catch (err) { alert("Transaction Failed!"); }
-    finally { 
-        document.getElementById('deposit-btn').innerText = "DEPOSIT NOW";
-        document.getElementById('deposit-btn').disabled = false;
+    function copyLink() {
+        const refInput = document.getElementById('refURL');
+        if (refInput.value.includes("Connect")) return alert("Connect Wallet First!");
+        refInput.select();
+        navigator.clipboard.writeText(refInput.value);
+        alert("Referral link copied!");
     }
-}
 
-async function handleClaim() {
-    try {
-        const tx = await window.contract.withdrawWorking();
-        await tx.wait();
-        alert("Withdrawal Successful!");
-        loadDashboardData();
-    } catch (err) { alert("Withdrawal Failed!"); }
-}
-
-function copyLink() {
-    const refInput = document.getElementById('refURL');
-    if (refInput.value.includes("Connect")) return alert("Connect Wallet First!");
-    refInput.select();
-    navigator.clipboard.writeText(refInput.value);
-    alert("Copied!");
-}
-
-// Start watching on load
-window.addEventListener('load', () => setTimeout(checkConnection, 500));
-</script>
+    // Initialize on load
+    window.addEventListener('load', initDashboard);
+    </script>
 </body>
 </html>
