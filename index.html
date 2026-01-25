@@ -3,220 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exge | </title>
-    
+    <title>Exgee | High-Yield DeFi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        :root {
-            --bg-deep: #050505;
-            --gold: #FFD700;
-            --gold-glow: rgba(255, 215, 0, 0.3);
-            --card-glass: rgba(255, 255, 255, 0.02);
-        }
-
-        body {
-            background-color: var(--bg-deep);
-            color: #e5e7eb;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            overflow-x: hidden;
-        }
-
+        :root { --bg-deep: #050505; --gold: #FFD700; --gold-glow: rgba(255, 215, 0, 0.3); }
+        body { background-color: var(--bg-deep); color: #e5e7eb; font-family: 'Plus Jakarta Sans', sans-serif; }
         .orbitron { font-family: 'Orbitron', sans-serif; }
-
-        .text-gold {
-            background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .glass-panel {
-            background: var(--card-glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 1.5rem;
-            transition: all 0.4s ease;
-        }
-
-        .glass-panel:hover {
-            border-color: rgba(255, 215, 0, 0.3);
-            background: rgba(255, 215, 0, 0.01);
-        }
-
-        .btn-gold {
-            background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
-            color: black;
-            font-weight: 800;
-            box-shadow: 0 10px 20px var(--gold-glow);
-            transition: all 0.3s ease;
-        }
-
-        .btn-gold:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(255, 215, 0, 0.5);
-        }
-
-        .premium-border {
-            border-left: 3px solid var(--gold);
-        }
-
-        .icon-circle {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 215, 0, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--gold);
-            margin-bottom: 1.5rem;
-        }
-
-        html { scroll-behavior: smooth; }
+        .text-gold { background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass-panel { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.5rem; transition: all 0.4s ease; }
+        .glass-panel:hover { border-color: rgba(255, 215, 0, 0.3); background: rgba(255, 215, 0, 0.02); }
+        .btn-gold { background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%); color: black; font-weight: 800; box-shadow: 0 10px 20px var(--gold-glow); transition: all 0.3s ease; }
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(255, 215, 0, 0.5); }
+        .premium-border { border-left: 3px solid var(--gold); }
     </style>
 </head>
 <body>
 
     <nav class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center relative z-50">
         <div class="flex items-center gap-3 cursor-pointer" onclick="location.href='index.html'">
-            <div class="w-10 h-10 bg-gradient-to-tr from-yellow-400 to-yellow-700 rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/20">
+            <div class="w-10 h-10 bg-gradient-to-tr from-yellow-400 to-yellow-700 rounded-xl flex items-center justify-center">
                 <i data-lucide="component" class="text-black w-6 h-6"></i>
             </div>
-            <span class="text-xl font-black orbitron tracking-tighter uppercase">EXGEE <span class="text-gold">USDT</span></span>
+            <span class="text-xl font-black orbitron uppercase tracking-tighter">EXGEE <span class="text-gold">USDT</span></span>
         </div>
-
         <div class="hidden lg:flex gap-8 text-[10px] font-bold uppercase tracking-widest text-gray-400 items-center">
-            <a href="index.html" class="hover:text-yellow-500 transition">Home</a>
-            <a href="#about-us" class="hover:text-yellow-500 transition">About</a>
-            <a href="#slabs" class="hover:text-yellow-500 transition">Slabs</a>
-            <button onclick="handleLogin()" class="text-white hover:text-yellow-500 border-l border-white/10 pl-6 ml-2 uppercase">Login</button>
-            <a href="register.html" class="text-yellow-500 hover:text-white uppercase transition font-black">Register</a>
+            <a href="index.html" class="hover:text-yellow-500">Home</a>
+            <a href="#earning" class="hover:text-yellow-500">Plan</a>
+            <button onclick="window.handleLogin()" class="text-white hover:text-yellow-500 border-l border-white/10 pl-6 uppercase">Login</button>
+            <a href="register.html" class="text-yellow-500 font-black uppercase">Register</a>
         </div>
-
-        <div class="flex items-center gap-4">
-            <button id="connect-btn" onclick="handleLogin()" class="glass-panel px-6 py-2.5 text-[10px] font-black text-yellow-500 border-yellow-500/30 hover:bg-yellow-500/10 transition uppercase tracking-widest">
-                Connect Wallet
-            </button>
-        </div>
+        <button id="connect-btn" onclick="window.handleLogin()" class="glass-panel px-6 py-2.5 text-[10px] font-black text-yellow-500 border-yellow-500/30 uppercase tracking-widest">
+            Connect Wallet
+        </button>
     </nav>
 
-    <header class="max-w-7xl mx-auto px-6 pt-20 pb-20 text-center relative z-10">
-        <div class="inline-block px-4 py-1.5 glass-panel text-[10px] font-bold tracking-[0.2em] text-yellow-500 border-yellow-500/20 mb-8 uppercase">
-            ⚡ BSC Network • Minimum 10 USDT ⚡
-        </div>
+    <header class="max-w-7xl mx-auto px-6 pt-20 pb-20 text-center">
         <h1 class="text-6xl md:text-8xl font-black orbitron leading-none mb-6">
-            SECURE <span class="text-gold italic">DEFI</span> <br> EVOLUTION
+            SMART <span class="text-gold italic">USDT</span> <br> PROTOCOL
         </h1>
-        <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-            Exgee is a transparent blockchain-powered platform built for the future of finance. Earn guaranteed daily ROI with automated smart contracts.
+        <p class="text-gray-400 text-lg max-w-2xl mx-auto mb-10">
+            A decentralized yield generator on BSC with automated daily ROI and 3-level referral rewards. 
         </p>
-        <div class="flex flex-wrap justify-center gap-4">
-            <button onclick="handleLogin()" class="btn-gold px-10 py-4 rounded-2xl text-lg uppercase tracking-wider">START INVESTING</button>
-            <a href="register.html" class="glass-panel px-10 py-4 rounded-2xl text-lg uppercase tracking-wider font-bold border-white/10 hover:bg-white/5 flex items-center">REGISTER NOW</a>
+        <div class="flex justify-center gap-4">
+            <button onclick="window.handleLogin()" class="btn-gold px-10 py-4 rounded-2xl text-lg uppercase">INVEST NOW</button>
         </div>
     </header>
 
     <section id="slabs" class="max-w-7xl mx-auto px-6 py-20">
         <div class="text-center mb-16">
-            <h2 class="text-3xl font-black orbitron italic uppercase">Investment <span class="text-gold">Slabs</span></h2>
-            <p class="text-gray-500 text-xs tracking-widest mt-2 uppercase">Higher Investment = Higher Returns</p>
+            <h2 class="text-3xl font-black orbitron uppercase italic">Investment <span class="text-gold">Slabs</span></h2>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div class="glass-panel p-6 text-center premium-border hover:scale-105 transition-transform">
-                <span class="text-[9px] font-bold text-gray-500 uppercase">Slab 1</span>
-                <h3 class="text-sm font-bold my-2 text-gray-300">10 - 100 USDT</h3>
-                <div class="text-3xl font-black text-gold my-3">0.95%</div>
-                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Daily ROI</p>
-            </div>
-            <div class="glass-panel p-6 text-center border-l-3 border-yellow-600 hover:scale-105 transition-transform" style="border-left: 3px solid #D4AF37;">
-                <span class="text-[9px] font-bold text-gray-500 uppercase">Slab 2</span>
-                <h3 class="text-sm font-bold my-2 text-gray-300">101 - 500 USDT</h3>
-                <div class="text-3xl font-black text-gold my-3">1.11%</div>
-                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Daily ROI</p>
-            </div>
-            <div class="glass-panel p-6 text-center border-2 border-yellow-500 relative scale-110 shadow-2xl shadow-yellow-500/10 bg-yellow-500/[0.02]">
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[9px] font-black px-4 py-1 rounded-full uppercase">Most Popular</div>
-                <span class="text-[9px] font-bold text-yellow-500 uppercase">Slab 3</span>
-                <h3 class="text-sm font-bold my-2 text-white">501 - 2500 USDT</h3>
-                <div class="text-3xl font-black text-gold my-3">1.33%</div>
-                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Daily ROI</p>
-            </div>
-            <div class="glass-panel p-6 text-center premium-border hover:scale-105 transition-transform">
-                <span class="text-[9px] font-bold text-gray-500 uppercase">Slab 4</span>
-                <h3 class="text-sm font-bold my-2 text-gray-300">2501 - 5000 USDT</h3>
-                <div class="text-3xl font-black text-gold my-3">1.55%</div>
-                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Daily ROI</p>
-            </div>
-            <div class="glass-panel p-6 text-center premium-border hover:scale-105 transition-transform">
-                <span class="text-[9px] font-bold text-gray-500 uppercase">Slab 5</span>
-                <h3 class="text-sm font-bold my-2 text-gray-300">Above 5000 USDT</h3>
-                <div class="text-3xl font-black text-gold my-3">1.75%</div>
-                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Daily ROI</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="max-w-7xl mx-auto px-6 py-24 relative z-10 border-t border-white/5">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-black orbitron italic uppercase">How It <span class="text-gold">Works</span></h2>
-        </div>
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="glass-panel p-8 premium-border">
-                <div class="icon-circle"><i data-lucide="wallet"></i></div>
-                <h4 class="text-xl font-black mb-3 italic uppercase">01. Connect Wallet</h4>
-                <p class="text-gray-500 text-sm leading-relaxed">Securely link your MetaMask or Trust Wallet via decentralized Web3 technology.</p>
+            <div class="glass-panel p-8 text-center premium-border">
+                <div class="text-gray-500 text-[10px] font-bold uppercase mb-2">Package 1</div>
+                <h3 class="text-xl font-black text-white mb-4 italic">10 - 100 USDT</h3>
+                <div class="text-5xl font-black text-gold mb-2">0.95%</div>
+                <div class="text-gray-400 text-sm mb-6">Daily Return</div>
+                <div class="bg-white/5 py-2 rounded-lg text-xs font-bold text-yellow-500">DURATION: 210 DAYS</div>
             </div>
-            <div class="glass-panel p-8 premium-border">
-                <div class="icon-circle"><i data-lucide="bar-chart-big"></i></div>
-                <h4 class="text-xl font-black mb-3 italic uppercase">02. Select Level</h4>
-                <p class="text-gray-500 text-sm leading-relaxed">Choose your investment amount which automatically sets your daily ROI slab.</p>
+
+            <div class="glass-panel p-8 text-center border-2 border-yellow-500 relative scale-105 bg-yellow-500/[0.03]">
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[10px] font-black px-6 py-1 rounded-full">POPULAR CHOICE</div>
+                <div class="text-gray-400 text-[10px] font-bold uppercase mb-2">Package 2</div>
+                <h3 class="text-xl font-black text-white mb-4 italic">101 - 500 USDT</h3>
+                <div class="text-5xl font-black text-gold mb-2">1.11%</div>
+                <div class="text-gray-400 text-sm mb-6">Daily Return</div>
+                <div class="bg-yellow-500/20 py-2 rounded-lg text-xs font-bold text-yellow-500">DURATION: 180 DAYS</div>
             </div>
-            <div class="glass-panel p-8 premium-border">
-                <div class="icon-circle"><i data-lucide="database"></i></div>
-                <h4 class="text-xl font-black mb-3 italic uppercase">03. Earn Daily</h4>
-                <p class="text-gray-500 text-sm leading-relaxed">Smart contracts distribute earnings directly to your dashboard every second.</p>
+
+            <div class="glass-panel p-8 text-center premium-border">
+                <div class="text-gray-500 text-[10px] font-bold uppercase mb-2">Package 3</div>
+                <h3 class="text-xl font-black text-white mb-4 italic">501+ USDT</h3>
+                <div class="text-5xl font-black text-gold mb-2">1.33%</div>
+                <div class="text-gray-400 text-sm mb-6">Daily Return</div>
+                <div class="bg-white/5 py-2 rounded-lg text-xs font-bold text-yellow-500">DURATION: 150 DAYS</div>
             </div>
         </div>
     </section>
 
-    <section id="about-us" class="max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div class="glass-panel p-10 gold-border bg-yellow-500/[0.01]">
-                <h2 class="text-3xl font-black orbitron mb-6 uppercase italic text-gold">About Exgee Ecosystem</h2>
-                <p class="text-gray-400 leading-relaxed mb-6">
-                    Exgee is built on the Binance Smart Chain (BSC) to provide the fastest and cheapest transactions in the DeFi space. Our protocol is designed to be fully decentralized, meaning no middleman can touch your funds.
-                </p>
-                <div class="flex flex-col gap-4">
-                    <div class="flex items-center gap-3 text-sm font-bold uppercase text-gray-300">
-                        <i data-lucide="check-circle-2" class="text-yellow-500 w-5 h-5"></i> Anti-Whale Protection
+    <section id="earning" class="max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-black orbitron uppercase italic">Income <span class="text-gold">Streams</span></h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div class="glass-panel p-8">
+                <h4 class="text-2xl font-black orbitron text-gold mb-6 uppercase italic">1. Direct Level Income</h4>
+                <div class="space-y-4">
+                    <div class="flex justify-between border-b border-white/5 pb-2">
+                        <span class="text-gray-400">Level 1 (Direct)</span>
+                        <span class="text-white font-bold">10% Bonus</span>
                     </div>
-                    <div class="flex items-center gap-3 text-sm font-bold uppercase text-gray-300">
-                        <i data-lucide="check-circle-2" class="text-yellow-500 w-5 h-5"></i> 100% Verified Contract
+                    <div class="flex justify-between border-b border-white/5 pb-2">
+                        <span class="text-gray-400">Level 2</span>
+                        <span class="text-white font-bold">2.5% Bonus</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Level 3</span>
+                        <span class="text-white font-bold">2.5% Bonus</span>
                     </div>
                 </div>
+                <p class="mt-6 text-xs text-gray-500">Bonus is credited instantly to your working balance upon team investment.</p>
             </div>
-            <div class="text-center lg:text-left">
-                <h3 class="text-5xl font-black orbitron mb-6 uppercase">TRUSTED BY <br> <span class="text-gold">COMMUNITY</span></h3>
-                <p class="text-gray-500 mb-8">Join thousands of investors worldwide who are building their passive income stream on the most reliable USDT protocol.</p>
-                <button onclick="location.href='register.html'" class="btn-gold px-8 py-3 rounded-xl uppercase font-black text-sm">Join the Team</button>
+
+            <div class="glass-panel p-8">
+                <h4 class="text-2xl font-black orbitron text-gold mb-6 uppercase italic">2. ROI Level Income</h4>
+                <div class="space-y-4">
+                    <div class="flex justify-between border-b border-white/5 pb-2">
+                        <span class="text-gray-400">Level 1 (Direct)</span>
+                        <span class="text-white font-bold">50% of their Daily ROI</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-2">
+                        <span class="text-gray-400">Level 2</span>
+                        <span class="text-white font-bold">25% of their Daily ROI</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Level 3</span>
+                        <span class="text-white font-bold">25% of their Daily ROI</span>
+                    </div>
+                </div>
+                <p class="mt-6 text-xs text-gray-500">Earn a percentage of what your team earns every single day. (Directs required for Level 2 & 3).</p>
             </div>
         </div>
     </section>
 
-    <footer class="max-w-7xl mx-auto px-6 py-10 text-center border-t border-white/5 text-gray-600 text-[10px] tracking-[0.5em] uppercase">
-        <p>© 2026 EXGEE USDT. ALL RIGHTS RESERVED. BUILT ON BINANCE SMART CHAIN.</p>
+    <footer class="text-center py-10 text-[10px] text-gray-600 tracking-widest border-t border-white/5 uppercase">
+        © 2026 EXGEE DEFI. Built on Binance Smart Chain.
     </footer>
 
-    <script>
-        lucide.createIcons();
-        
-        // No local handleLogin here, it will use the one from web3-handler.js
-    </script>
+    <script src="web3-handler.js"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>
-
