@@ -177,7 +177,7 @@
         }, 1000);
     }
 
-    async function loadDashboardData(address) {
+   async function loadDashboardData(address) {
         try {
             const data = await window.contract.fetchAllUserData(address);
             const liveStats = await window.contract.getLiveStat(address);
@@ -185,6 +185,7 @@
             const fmt = (val) => parseFloat(ethers.utils.formatUnits(val, 18)).toFixed(2);
             const fmt4 = (val) => parseFloat(ethers.utils.formatUnits(val, 18)).toFixed(4);
 
+            // Stats Update
             document.getElementById('total-deposit-display').innerText = fmt(data.totalSelfInvestment);
             document.getElementById('active-deposit').innerText = fmt(data.totalSelfInvestment);
             document.getElementById('total-earned').innerText = fmt(data.totalLevelIncome.add(data.totalLevelROIIncome));
@@ -205,37 +206,51 @@
                 document.getElementById('refURL').value = `${window.location.origin}/register.html?ref=${data.username}`;
             }
 
-            // --- Load History Table ---
+            // --- INVESTMENT HISTORY TABLE (FIXED) ---
             const historyBody = document.getElementById('history-table-body');
-            const userPositions = await window.contract.users(address); 
-            // Note: Agar contract mein users array positions return karta hai toh use loop karein
-            // Niche wala example common contract structure ke liye hai:
-            const totalPos = await window.contract.getUserPositions(address); // Is function ko check karein
-            if(totalPos && totalPos.length > 0) {
-                historyBody.innerHTML = '';
-                totalPos.forEach((pos, i) => {
-                    const amt = ethers.utils.formatUnits(pos.amount, 18);
-                    const date = new Date(pos.startTime * 1000).toLocaleDateString();
-                    let rate = "0.95%";
-                    if(amt > 100) rate = "1.11%";
-                    if(amt > 500) rate = "1.33%";
-                    
-                    historyBody.innerHTML += `
-                        <tr>
-                            <td>#${i}</td>
-                            <td class="text-yellow-500">$${amt}</td>
-                            <td class="text-green-400">${rate}</td>
-                            <td>${date}</td>
-                            <td>${Math.floor(pos.duration/86400)} Days</td>
-                            <td><span class="text-[10px] bg-green-500/10 text-green-500 p-1 rounded">ACTIVE</span></td>
-                        </tr>
-                    `;
-                });
+            
+            // Aapke contract se history fetch kar rahe hain
+            const historyData = await window.contract.getTransactionHistory(address);
+            
+            if (historyData && historyData.length > 0) {
+                // Sirf DEPOSIT (Type 0) transactions ko filter kar rahe hain
+                const deposits = historyData.filter(t => t.tType === 0);
+                
+                if(deposits.length > 0) {
+                    historyBody.innerHTML = ''; // Table clear karein
+                    deposits.forEach((t, i) => {
+                        const amt = parseFloat(ethers.utils.formatUnits(t.amount, 18));
+                        const date = new Date(t.timestamp * 1000).toLocaleDateString();
+                        
+                        // Contract logic ke hisaab se Rate aur Days calculate karna
+                        let rate = "0.95%";
+                        let days = "210";
+                        if(amt > 500) { rate = "1.33%"; days = "150"; }
+                        else if(amt > 100) { rate = "1.11%"; days = "180"; }
+                        
+                        historyBody.innerHTML += `
+                            <tr>
+                                <td class="orbitron text-gray-500">#${i + 1}</td>
+                                <td class="text-yellow-500 font-bold">$${amt.toFixed(2)}</td>
+                                <td class="text-green-400 font-bold">${rate}</td>
+                                <td class="text-gray-400">${date}</td>
+                                <td class="text-gray-400">${days} Days</td>
+                                <td>
+                                    <span class="px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] border border-green-500/20 font-bold">
+                                        ACTIVE
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    historyBody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-500 orbitron text-xs">No deposits found</td></tr>';
+                }
             }
-
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error("Load Error:", err); 
+        }
     }
-
     async function handleMaturityWithdraw() {
         try {
             const tx = await window.contract.withdrawMaturity(0); 
@@ -257,3 +272,4 @@
     </script>
 </body>
 </html>
+
