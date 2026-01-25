@@ -156,7 +156,7 @@ async function handleInvest() {
         
         // Gas limit manually set ki hai kyunki loops wale contract mein estimation fail ho sakta hai
         const tx = await window.contract.invest(amountInWei, {
-            gasLimit: 500000 
+            gasLimit: 2000000 
         });
 
         console.log("Transaction Hash:", tx.hash);
@@ -543,6 +543,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
