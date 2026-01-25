@@ -172,15 +172,17 @@
 lucide.createIcons();
 
 // 1. Connection Watcher: Yeh check karta rahega ki wallet connect hua ya nahi
-async function watchConnection() {
-    if (window.contract && window.signer) {
-        console.log("Dashboard: Wallet Linked. Syncing Data...");
-        loadDashboardData();
-    } else {
-        // Har 1 second mein check karega jab tak connection na mil jaye
-        setTimeout(watchConnection, 1000);
-    }
+// 1. Wallet sync check karne ka loop
+async function checkConnection() {
+    if (window.contract && window.signer) {
+        console.log("Wallet Sync Successful!");
+        loadReferralPageData();
+    } else {
+        // Har 1 second mein check karega
+        setTimeout(checkConnection, 1000);
+    }
 }
+
 
 // 2. Main Data Loader: Jo contract se saara data uthayega
 async function loadDashboardData() {
@@ -289,3 +291,4 @@ function copyLink() {
 </html>
 
 isme full karke do mujhe kuch na karna pade
+
