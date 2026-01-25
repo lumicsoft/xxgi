@@ -190,32 +190,37 @@ window.claimNetworkReward = async function(amountInWei) {
 }
 
 window.handleLogin = async function() {
-    try {
-        console.log("Login sequence started...");
-        if (!(await ensureConnection())) return;
-        
-        const userAddress = await signer.getAddress();
-        localStorage.removeItem('manualLogout');
-        
-        // Contract se user check karein
-        const userData = await contract.users(userAddress);
+    try {
+        if (!window.ethereum) return alert("Please install MetaMask!");
+        
+        // 1. Accounts request karein
+        const accounts = await provider.send("eth_requestAccounts", []);
+        if (accounts.length === 0) return;
+        
+        const userAddress = accounts[0]; 
+        
+        // 2. Signer aur Contract ko re-initialize karein
+        signer = provider.getSigner();
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        
+        // Logout flag clear karein
+        localStorage.removeItem('manualLogout');
+        
+        // 3. Contract se user data fetch karein
+        const userData = await contract.users(userAddress);
 
-        // Agar user registered hai (username empty nahi hai)
-        if (userData.username && userData.username !== "") {
-            console.log("User registered, redirecting to Dashboard...");
-            if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
-            
-            // Yahan se user panel (index1.html) par bhej dega
-            window.location.href = "index1.html";
-        } else {
-            // Agar registered nahi hai toh registration page par bhejega
-            alert("This wallet is not registered! Redirecting to register page...");
-            window.location.href = "register.html";
-        }
-    } catch (err) {
-        console.error("Login Error:", err);
-        alert("Login failed! Please check your MetaMask or Network.");
-    }
+        // 4. Registration Check
+        if (userData.registered === true) {
+            if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
+            window.location.href = "index1.html";
+        } else {
+            alert("This wallet is not registered in Exgi!");
+            window.location.href = "register.html";
+        }
+    } catch (err) {
+        console.error("Login Error:", err);
+        alert("Login failed! Make sure you are on BSC Mainnet.");
+    }
 }
 
 window.handleRegister = async function() {
@@ -536,6 +541,7 @@ if (window.ethereum) {
 window.addEventListener('load', () => {
     setTimeout(init, 500); 
 });
+
 
 
 
